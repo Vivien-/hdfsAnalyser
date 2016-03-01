@@ -84,6 +84,16 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 		var end = new Date().getTime();
 		$("#time").text("hdfs fetched in " + (end-start)/1000 + "s");		
 	}
+	
+	$("#path").html('<span class="path_element" style="background-color: #cccccc">' + "/"+root.name+'</span>/$#');
+
+	$("#infos")
+	.css("position", "absolute")
+	.css("left", (x + margin.left) + "px")
+	.css("top", (parseInt($("#path").css("top"), 10) + parseInt($("#path").height(),10) + 15 ) + "px")
+	.css("z-index", 10)
+	.css("width", (x - 2*margin.left) + "px")
+	.css("height", (y/2 - 2*margin.top) + "px");
 	// Compute the initial layout on the entire tree to sum sizes.
 	// Also compute the full name and fill color for each node,
 	// and stash the children so they can be restored as we descend.
@@ -149,7 +159,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 	}
 	
 	var end2 = new Date().getTime();
-	$("#time").append("<br>visualization in " + ((end2-end)/1000) + "s");
+	//$("#time").append("<br>visualization in " + ((end2-end)/1000) + "s");
 	// Zoom to the specified new root.
 	function zoom(root, p) {
 		if (document.documentElement.__transition__) return;
@@ -174,7 +184,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 			path_dir += '<span class="path_element" style="background-color: ' + col + '">' + current_dir.name+'</span>/$#';
 			current_dir = current_dir.parent;
 		}
-		path_dir += '<span class="path_element" style="background-color: #cccccc">/</span>/$#';
+		path_dir += '<span class="path_element" style="background-color: #cccccc">' + "/"+current_dir.name+'</span>/$#';
 		$("#path").html(path_dir.split("/$#").reverse().join(""));
 		
 		function outsideArc(d) {

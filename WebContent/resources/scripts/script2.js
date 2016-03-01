@@ -20,10 +20,7 @@ $("#border")
 
 var this_radius = Math.min((x/2-2*margin.left),(y/2-2*margin.top))/2;
 
-$("#infoSize")
-.css("left", (x + margin.left) + "px")
-.css("top", (margin.top + this_radius*2) + "px")
-.css("z-index", 10);
+
 
 $("#datanodes")
 .css("position", "absolute")
@@ -42,14 +39,26 @@ $("#path")
 .css("top", (y/2 + margin.top/2) + "px")
 .css("height", "auto !important")
 .css("z-index", 10)
-.css("max-width", (x - 2*margin.left) + "px")
-.html('<span class="path_element" style="background-color: #cccccc"">/</span>');
+.css("max-width", (x - 2*margin.left) + "px");
 
-$("#infos")
-.css("position", "absolute")
-.css("left", (x + margin.left) + "px")
-.css("top", (parseInt($("#path").css("top"), 10) + parseInt($("#path").height(),10) + 15 ) + "px")
-.css("z-index", 10)
-.css("width", (x - 2*margin.left) + "px")
-.css("height", (y/2 - 2*margin.top) + "px");
+
+$("#switch")
+.css("width",x/6)
+.css("height",margin.top/2)
+.css("top",0)
+.css("left",0);
+
+
+$("#details")
+.css("width",x/6)
+.css("height",margin.top/2)
+.css("top",0)
+.css("left",x/6);
+
+
+$("#time")
+.css("width",x/6)
+.css("height",margin.bottom/2)
+.css("top",y-20)
+.css("left",0);
 
