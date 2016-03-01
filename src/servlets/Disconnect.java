@@ -20,7 +20,7 @@ public class Disconnect extends HttpServlet {
      */
     public Disconnect() {
         super();
-        // TODO Auto-generated constructor stub
+       
     }
 
 	/**
