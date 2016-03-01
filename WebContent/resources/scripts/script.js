@@ -9,7 +9,7 @@
 			if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
 				callback(xmlHttp.responseText);
 		}
-		xmlHttp.open("GET", theUrl, true); // true for asynchronous 
+		xmlHttp.open("GET", theUrl, true); // true for asynchronous which we want
 		xmlHttp.send(null);
 	}
 	
