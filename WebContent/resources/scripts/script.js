@@ -99,15 +99,10 @@
 		.attr("fill", function(d, i) { return hue(i); } )
 		.attr("d", arc);
 
-		var usedspaceid = "";
 		for(var i = 0; i < dataset.length; i++) {
-			if(dataset[i].label == 'Used space')
-				usedspaceid = "id='usedspaceid'";
-			$("#infoSize").append("<div><figure class='circle' style='background: " + hue(i) + "'></figure><span class='info' style='color: "+ hue(i) +"'>" + dataset[i].label + " &nbsp&nbsp</span><span "+ usedspaceid +"class='right' style='color: white'> " + formatBytes(dataset[i].count,2) + "</span></div><div style='clear:both;'></div>");
+			$("#infoSize").append("<div><figure class='circle' style='background: " + hue(i) + "'></figure><span class='info' style='color: "+ hue(i) +"'>" + dataset[i].label + " &nbsp&nbsp</span><span class='right' style='color: white'> " + formatBytes(dataset[i].count,2) + "</span></div><div style='clear:both;'></div>");
 		}
 		
-		console.log($("#center"));
-		$("#usedspaceid").append(" ("+ obj.replication +"x"+ (formatBytes(obj.summary[0].used / obj.replication , 2)) +")"); 
 //		for(var i = 0; i < 8; i++){
 //			obj.summary[i+2] = obj.summary[1];
 //		}
