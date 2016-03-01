@@ -71,7 +71,7 @@
 		var dataset = [{ label: 'Used space', count: obj.summary[0].used}, 
 		               { label: 'Free space', count: obj.summary[0].unused}];
 		//4 times smaller than sunburst
-
+		$("#replication").html("Replication factor : "+obj.replication+"</br>"+"Number of datanodes : "+(obj.summary.length-1));
 		var vis = d3.select("#chart")
 		.append("svg:svg") //create the SVG element inside the <body>
 		.data([dataset]) //associate our data with the document
