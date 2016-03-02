@@ -3,6 +3,7 @@ package servlets;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -26,8 +27,22 @@ public class DiskDetails extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
-		response.getWriter().append("Served at: ").append(request.getContextPath());
+		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1
+		response.setHeader("Pragma", "no-cache"); // HTTP 1.0
+		response.setDateHeader("Expires", 0); // Proxies.
+		Cookie[] cookies = null;
+		cookies = request.getCookies();
+		boolean isok = false;
+		if(cookies != null){
+			for(int i= 0; i < cookies.length; i++){
+				if(cookies[i].getName().equals("url"))
+					isok = true;
+			}			
+		}
+		if(isok)
+			request.getRequestDispatcher("diskDetails.html").forward(request, response);
+		else
+			request.getRequestDispatcher("url.html").forward(request, response);	
 	}
 
 	/**
