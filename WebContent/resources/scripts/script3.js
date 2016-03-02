@@ -85,7 +85,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 		$("#time").text("hdfs fetched in " + (end-start)/1000 + "s");		
 	}
 	
-	$("#path").html('<span class="path_element" style="background-color: #cccccc">' + "/"+root.name+'</span>/$#');
+	$("#path").html('<span class="path_element" style="background-color: #cccccc">' + "/"+root.name+'</span>');
 
 	$("#infos")
 	.css("position", "absolute")
