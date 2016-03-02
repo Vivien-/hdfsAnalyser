@@ -112,7 +112,6 @@
 		}
 		
 		$("#infoSize").append("</br><div style='color:white;'>Replication factor : "+obj.replication+"</br>"+"Number of datanodes : "+(obj.summary.length-1)+"</div>")
-		console.log($("#infoSize").height());
 		$("#infoSize")
 		.css("position", "absolute")
 		.css("left", (3*x/2 + margin.left) + "px")

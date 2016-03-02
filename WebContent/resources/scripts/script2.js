@@ -20,8 +20,6 @@ $("#border")
 
 var this_radius = Math.min((x/2-2*margin.left),(y/2-2*margin.top))/2;
 
-
-
 $("#datanodes")
 .css("position", "absolute")
 .css("top",  (margin.top/2) + "px")
