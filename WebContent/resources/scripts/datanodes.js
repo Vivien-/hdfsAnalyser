@@ -1,4 +1,35 @@
-var wrapper_width = numberOfLayers*radius/3;
+function httpGetAsync(theUrl, callback) {
+	var xmlHttp = new XMLHttpRequest();
+	xmlHttp.onreadystatechange = function() { 
+		if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+			callback(xmlHttp.responseText);
+	}
+	xmlHttp.open("GET", theUrl, true); // true for asynchronous which we want
+	xmlHttp.send(null);
+} 
+
+function formatBytes(bytes,decimals) {
+	if(bytes == 0) return '0 o';
+	var k = 1000;
+	var dm = decimals + 1 || 3;
+	var sizes = ['o', 'Ko', 'Mo', 'Go', 'To', 'Po', 'Eo', 'Zo', 'Yo'];
+	var i = Math.floor(Math.log(bytes) / Math.log(k));
+	return (bytes / Math.pow(k, i)).toPrecision(dm) + ' ' + sizes[i];
+}
+
+var w = window,
+	d = document,
+	e = d.documentElement,
+	g = d.getElementsByTagName('body')[0],
+	x = w.innerWidth || e.clientWidth || g.clientWidth,
+	y = w.innerHeight|| e.clientHeight|| g.clientHeight;
+
+var margin = {top: y/10, right: x/10, bottom: y/10, left: x/10 }; 
+var hue = d3.scale.category10();
+
+var length = 0;
+var radius = 0;
+var wrapper_width = 0;
 
 function displayDatanode(data, i) {
 	var $wrapper = $('#datanodes').children().eq(i-1);
@@ -6,9 +37,7 @@ function displayDatanode(data, i) {
 	var dataset = [{ label: 'Used space', count: data.used, percentage: data.percentage}, 
 	               { label: 'Free space', count: data.unused, percentage: (100-data.percentage)}
 	];
-
-
-	var radius = this_radius/3;
+	
 	var vis = d3.select($wrapper[0])
 	.append("svg:svg") //create the SVG element inside the <body>
 	.data([dataset]) //associate our data with the document
@@ -18,8 +47,8 @@ function displayDatanode(data, i) {
 	.attr('transform', 'translate(' + (wrapper_width/2)+ ',' + (wrapper_width/2) + ')');
 
 	var arc = d3.svg.arc()
-	.outerRadius(2*radius)
-	.innerRadius(2*radius - 30);
+	.outerRadius(radius)
+	.innerRadius(radius/2);
 
 	var pie = d3.layout.pie() //this will create arc data for us given a list of values
 	.value(function(d) { return d.count; }); // Binding each value to the pie
@@ -44,9 +73,59 @@ function createWrapper() {
 	$last
 	.css("width", wrapper_width)
 	.css("height", wrapper_width + 15)
-	.css("margin","1px")
+	.css("margin", margin.right/5)
 	.css("display", "inline-block");
 
-	$last.append("<span>");
-	$last.children().eq(0).css("width", wrapper_width).css("height", 15);
+	$last.append("<div>");
+	$last.children().eq(0).css("width", wrapper_width).css("height", 15).addClass("center");
 }
+
+httpGetAsync("/HadoopAnalyser/DiskUsage", function(json) {
+	var obj = JSON.parse(json);
+	
+	//uncomment to test ui with multiple datanodes
+//	for(var i = 0; i < 45; i++)
+//	obj.summary[i+2] = obj.summary[1];
+	
+	$datanodes = $("#datanodes");
+	$datanodes.css({"margin-top": margin.top,
+					"margin-bottom": 0,
+					"margin-left": margin.left,
+					"margin-right": margin.right
+				});
+	
+	var dataset = [{ label: 'Used space', count: obj.summary[0].used}, 
+	               { label: 'Free space', count: obj.summary[0].unused}];
+	
+	for(var i = 0; i < dataset.length; i++) {
+		$("#infoSize").append("<div><figure class='circle' style='background: " + hue(i) + "'></figure><span class='info' style='color: "+ hue(i) +"'>" + dataset[i].label + " &nbsp&nbsp</span><span class='right' style='color: white'> " + formatBytes(dataset[i].count,2) + "</span></div><div style='clear:both;'></div>");
+	}
+	
+	$("#infoSize").append("</br><div style='color:white;'>Replication factor : "+obj.replication+"</br>"+"Number of datanodes : "+(obj.summary.length-1)+"</div>")
+	$("#infoSize")
+	.css("position", "absolute")
+	.css("left", (x/4) + "px")
+	.css("top", "0px")
+	.css("z-index", 10);
+	
+	length = obj.summary.length - 1;
+	var size_min = 100,
+		size_max = 500;
+	var $width = $("#datanodes").width() - 2*margin.right;
+	
+	if($width/length > size_min && $width/length < size_max)
+		wrapper_width = $width/length;
+	else if($width/length < size_min)
+		wrapper_width = size_min;
+	else if($width/length > size_max)
+		wrapper_width = size_max;
+	
+	radius = wrapper_width/2;
+	
+	for(var i = 0; i < length; i++) {
+		createWrapper();
+	}
+	for(var i = 0; i < length; i++) {
+		displayDatanode(obj.summary[i+1], i+1);
+	}
+});

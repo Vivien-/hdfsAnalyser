@@ -3,7 +3,6 @@ body {
 	margin: auto;
 	position: relative;
 	background-color: #1a1a1a;
-	overflow: hidden;
 }
 
 html, body {
@@ -148,13 +147,10 @@ path text {
 	left: 170px;
 	color: #A1A1A1;
 	font-size: 12px;
+	margin-left: 1px;
 }
 
-#datanodes {
-	overflow: auto;
-}
-
-div span {
+.center {
 	color:#A1A1A1;
 	text-align: center;
 	word-wrap: break-word; 

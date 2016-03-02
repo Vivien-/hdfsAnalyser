@@ -45,11 +45,6 @@ $("#switch")
 .css("left",0);
 
 
-$("#details")
-.css("top",0)
-.css("left",x/6);
-
-
 $("#time")
 .css("top",y-20)
 .css("left",0);

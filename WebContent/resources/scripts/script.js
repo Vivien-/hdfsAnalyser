@@ -65,16 +65,11 @@
 		.css("left", (3*x/2 + margin.left) + "px")
 		.css("top", ((y - $("#infoSize").height())/2) + "px")
 		.css("z-index", 10);
-//		for(var i = 0; i < 16; i++){
-//			obj.summary[i+2] = obj.summary[1];
-//		}
-//		
-//		for(var i = 1; i < obj.summary.length; i++) {
-//			createWrapper();
-//		}
-//		for(var i = 1; i < obj.summary.length; i++) {
-//			displayDatanode(obj.summary[i], i);
-//		}
+		
+		$("#details")
+		.css("position", "absolute")
+		.css("left", (3*x/2 + margin.left) + "px")
+		.css("top", ((y - $("#infoSize").height())) + "px");
 	}
 
 	httpGetAsync("/HadoopAnalyser/DiskUsage", dostuff)
