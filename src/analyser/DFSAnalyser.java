@@ -62,12 +62,17 @@ public class DFSAnalyser {
 
 	public String jsonify(TreeMap<String,Map<String, Long>> treemap) {
 		JsonObject json = new JsonObject();
+		JsonObject json_f = new JsonObject();
+		json_f.addProperty("name", "/");
+		json_f.add("children", new JsonArray());
 		for(Map.Entry<String,Map<String,Long>> entry : treemap.entrySet()) {
 			String key = entry.getKey();
 			String[] tokens = key.split("/");
 
 			//create the root node
 			if(json.get("name") == null || !json.get("name").getAsString().equals(tokens[0])) {
+				json_f.get("children").getAsJsonArray().add(json);
+				json = new JsonObject();
 				json.addProperty("name", tokens[0]);
 				json.add("children", new JsonArray());
 			}
@@ -96,7 +101,8 @@ public class DFSAnalyser {
 				next.get("children").getAsJsonArray().add(tmp);
 			}
 		}
-		return json.toString();
+		json_f.get("children").getAsJsonArray().add(json);
+		return json_f.toString();
 	}
 
 	public TreeMap<String,Map<String, Long>> getHDFSContent(String directory) throws IllegalArgumentException, IOException, URISyntaxException{
