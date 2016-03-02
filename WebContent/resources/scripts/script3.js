@@ -85,7 +85,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 		$("#time").text("hdfs fetched in " + (end-start)/1000 + "s");		
 	}
 	
-	$("#path").html('<span class="path_element" style="background-color: #cccccc">' + "/"+root.name+'</span>');
+	$("#path").html('<span class="path_element" style="background-color: #cccccc">' +root.name+'</span>');
 
 	$("#infos")
 	.css("position", "absolute")
@@ -183,8 +183,8 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 			var col = current_dir.fill.toString();
 			path_dir += '<span class="path_element" style="background-color: ' + col + '">' + current_dir.name+'</span>/$#';
 			current_dir = current_dir.parent;
-		}
-		path_dir += '<span class="path_element" style="background-color: #cccccc">' + "/"+current_dir.name+'</span>/$#';
+		} 
+		path_dir += '<span class="path_element" style="background-color: #cccccc">' + current_dir.name+'</span>/$#';
 		$("#path").html(path_dir.split("/$#").reverse().join(""));
 		
 		function outsideArc(d) {
