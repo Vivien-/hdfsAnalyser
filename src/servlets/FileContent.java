@@ -41,8 +41,8 @@ public class FileContent extends HttpServlet {
 			for(int i = 0; i < cookies.length; i++){
 				if(cookies[i].getName().equals("url")){
 					try {
-						DFSAnalyser dfs = new DFSAnalyser(cookies[i].getValue());
-						json = dfs.jsonify(dfs.getHDFSContent(""));
+						DFSAnalyser dfs = new DFSAnalyser(/*cookies[i].getValue()*/);
+						json = dfs.jsonify(dfs.getHDFSContent(/*""*/));
 						isok = true;
 					} catch (IllegalArgumentException e) {
 						isok = false;

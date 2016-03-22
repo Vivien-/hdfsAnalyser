@@ -41,7 +41,7 @@ public class DiskUsage extends HttpServlet {
 			for(int i = 0; i < cookies.length; i++){
 				if(cookies[i].getName().equals("url")){
 					try {
-						DFSAnalyser dfs = new DFSAnalyser(cookies[i].getValue());
+						DFSAnalyser dfs = new DFSAnalyser(/*cookies[i].getValue()*/);
 						json = dfs.diskUsage();
 						isok = true;
 					} catch (URISyntaxException e) {	

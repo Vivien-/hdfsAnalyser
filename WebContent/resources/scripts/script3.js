@@ -1,17 +1,17 @@
 var w = window,
-    d = document,
-    e = d.documentElement,
-    g = d.getElementsByTagName('body')[0],
-    x = w.innerWidth || e.clientWidth || g.clientWidth,
-    y = w.innerHeight|| e.clientHeight|| g.clientHeight;
+d = document,
+e = d.documentElement,
+g = d.getElementsByTagName('body')[0],
+x = w.innerWidth || e.clientWidth || g.clientWidth,
+y = w.innerHeight|| e.clientHeight|| g.clientHeight;
 //put svg in the left side of the screen
 x=x/2;
 //number of layers including the center
 var numberOfLayers = 7;
 var margin = {top: y/30, right: x/30, bottom: y/30, left: x/30 },
-	radius = Math.min(y - 2*margin.top, x - 2*margin.right, y - 2*margin.bottom, x - 2*margin.left)/(2*numberOfLayers);
+radius = Math.min(y - 2*margin.top, x - 2*margin.right, y - 2*margin.bottom, x - 2*margin.left)/(2*numberOfLayers);
 
-var min_degree_arc_filter = 1;
+var min_degree_arc_filter = 2;
 var hue = d3.scale.category10();
 
 function formatBytes(bytes,decimals) {
@@ -68,7 +68,7 @@ var partition = d3.layout.partition()
 var arc = d3.svg.arc()
 .startAngle(function(d) { return d.x; })
 .endAngle(function(d) { return d.x + d.dx ; })
-.padAngle(.05) 
+.padAngle(0.05) 
 .padRadius(radius/3)
 .innerRadius(function(d) { return radius* d.depth; })
 .outerRadius(function(d) { return radius * (d.depth + 1) - 1; });
@@ -84,7 +84,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 		var end = new Date().getTime();
 		$("#time").text("hdfs fetched in " + (end-start)/1000 + "s");		
 	}
-	
+
 	$("#path").html('<span class="path_element" style="background-color: #cccccc">' +root.name+'</span>');
 
 	$("#infos")
@@ -93,7 +93,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 	.css("top", (parseInt($("#path").css("top"), 10) + parseInt($("#path").height(),10) + 15 ) + "px")
 	.css("z-index", 10)
 	.css("width", (x - 2*margin.left) + "px")
-	.css("height", (y/2 - 2*margin.top) + "px");
+	.css("height", (y/2 - 2*margin.top ) + "px");
 	// Compute the initial layout on the entire tree to sum sizes.
 	// Also compute the full name and fill color for each node,
 	// and stash the children so they can be restored as we descend.
@@ -116,9 +116,9 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 	.on("click", zoomOut);
 
 	center.append("title").text("zoom out");
-	
+
 	$("#center").text(formatBytes(root.value, 2));
-	
+
 	var children_sorted = root.children.sort(function(a,b){
 		if(a.value > b.value)
 			return -1;
@@ -126,20 +126,37 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 			return 1;
 		else 
 			return 0;
-	})
+	});
 
 	for(var i = 0; i < children_sorted.length; i++){
 		var child = children_sorted[i];
 		var col = d3.select(child)[0][0].fill.toString();
 		$("#infos").append("<div><figure class='circle' style='background: " + col + "'></figure><span class='info' style='color: " + col + "'> " + child.name + "</span><span class='right' style='color: white'> " + formatBytes(child.value,2) + "</span></div><div style='clear:both;'></div>");
 	}
-	
+
+	for(var i = 0; i < children_sorted.length; i++){
+		var $thisDiv = $("#infos").children().eq(i*2);
+		$thisDiv.click(function(event){
+			var idx = $(event.currentTarget).index();
+			//because there is hidden div that break the float: right
+			idx = idx/2;
+			console.log(children_sorted[i].name);
+			for(var j = 0; j < root.children.length; j++) {
+				console.log(root.children[j].name, ",", children_sorted[idx].name, root.children[j].name  === children_sorted[idx].name);
+				if(root.children[j].name === children_sorted[idx].name) {
+					idx = j;
+				}
+			}
+			zoomIn(root.children[idx]);
+		});
+	}
+
 	var path = svg.selectAll("path")
 	.data(partition.nodes(root).slice(1))
 	.enter().append("path")
 	.filter(function(d) { return (Math.abs(d.x - (d.x + d.dx)) > min_degree_arc_filter *(Math.PI)/180); })
 	.attr("d", arc)
-	.style("fill", function(d) { return d.fill; })
+	.style("fill", function(d) { return fill(d); })
 	.on("mouseover", mouseOverArc)
 	.on("mousemove", mouseMoveArc)
 	.on("mouseout", mouseOutArc)
@@ -157,7 +174,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 		if (!p.parent) return;
 		zoom(p.parent, p);
 	}
-	
+
 	var end2 = new Date().getTime();
 	//$("#time").append("<br>visualization in " + ((end2-end)/1000) + "s");
 	// Zoom to the specified new root.
@@ -165,9 +182,9 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 		if (document.documentElement.__transition__) return;
 		// Rescale outside angles to match the new layout.
 		var enterArc,
-			exitArc,
-			outsideAngle = d3.scale.linear().domain([0, 2 * Math.PI]);
-
+		exitArc,
+		outsideAngle = d3.scale.linear().domain([0, 2 * Math.PI]);
+		
 		function insideArc(d) {
 			return p.key > d.key
 			? {depth: d.depth - 1, x: 0, dx: 0} : p.key < d.key
@@ -186,16 +203,13 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 		} 
 		path_dir += '<span class="path_element" style="background-color: #cccccc">' + current_dir.name+'</span>/$#';
 		$("#path").html(path_dir.split("/$#").reverse().join(""));
-		
+
 		function outsideArc(d) {
 			return {depth: d.depth + 1, x: outsideAngle(d.x), dx: outsideAngle(d.x + d.dx) - outsideAngle(d.x)};
 		}
 
-	
-		
 		center.datum(root);
-		var val = 0;
-		
+
 		var children_sorted = root.children.sort(function(a,b){
 			if(a.value > b.value)
 				return -1;
@@ -204,9 +218,9 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 			else 
 				return 0;
 		})
-		
+
 		$("#infos").empty();
-		
+		var val = 0;
 		for(var i = 0; i < children_sorted.length; i++){
 			val += root.children[i].value;
 			var child = children_sorted[i];
@@ -216,7 +230,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 		$("#center").text(formatBytes(val,2));
 
 		$("#infos").css("top", parseInt($("#path").css("top"), 10) + parseInt($("#path").height(),10) + 5);
-		
+
 		// When zooming in, arcs enter from the outside and exit to the inside.
 		// Entering outside arcs start from the old layout.
 		if (root === p) enterArc = outsideArc, exitArc = insideArc, outsideAngle.range([p.x, p.x + p.dx]);
@@ -245,6 +259,8 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 
 			path.transition()
 			.style("fill-opacity", 1)
+			.style("fill", function(d) { return fill(d); })
+			.style("display", function(d) { if(Math.abs(d.x - (d.x + d.dx)) > min_degree_arc_filter *(Math.PI)/180) return "inherit"; return "none"; })
 			.attrTween("d", function(d) { return arcTween.call(this, updateArc(d)); });
 		});
 
@@ -254,7 +270,20 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 				current_elem = current_elem.parent;
 			zoomIn(current_elem);	
 		});
-		
+
+		for(var i = 0; i < children_sorted.length; i++){
+			var $thisDiv = $("#infos").children().eq(i*2);
+			$thisDiv.click(function(event){
+				var thatname = event.currentTarget.textContent.split(" ")[0];
+				var idx = 0;
+				for(var j = 0; j < root.children.length; j++) {
+					if(root.children[j].name === thatname) {
+						idx = j;
+					}
+				}
+				zoomIn(root.children[idx]);
+			});
+		}
 	}
 });
 
@@ -264,15 +293,32 @@ function key(d) {
 	return k.reverse().join(".");
 }
 
-function nextColor(color) {
-	return colors[(colors.indexOf(color) + 1) % (colors.length)];
+var colors = [];
+
+function makeColorGradient(frequency1, frequency2, frequency3,
+		phase1, phase2, phase3,
+		center, width, len)
+{
+	if (center == undefined)   center = 128;
+	if (width == undefined)    width = 127;
+	if (len == undefined)      len = 50;
+
+	for (var i = 0; i < len; ++i)
+	{
+		var red = Math.sin(frequency1*i + phase1) * width + center;
+		var grn = Math.sin(frequency2*i + phase2) * width + center;
+		var blu = Math.sin(frequency3*i + phase3) * width + center;
+		colors[i] = {"r":red, "g": grn, "b": blu};
+	}
 }
 
+makeColorGradient(.015,.015,.015,0,2,4, 170, 85, 360);
+
 function fill(d) {
-	var p = d;
-	while (p.depth > 1) p = p.parent;
-	var c = d3.lab(hue(p.name));
-	c.l = luminance(50000 * d.depth);
+	var angle_degree = Math.floor(d.x * (360/(2*Math.PI))) % 360;
+	var index = angle_degree; //Math.floor(angle_degree * (colors.length - 1)/ 360);
+	var c = d3.lab("rgb("+colors[index].r+"," +  colors[index].g + "," + colors[index].b + ")");
+	c.l = luminance(300000 / d.depth);
 	return c;
 }
 
@@ -292,4 +338,3 @@ d3.select(self.frameElement).style("height", margin.top + margin.bottom + "px");
 $("svg").hover(function(){
 	tooltip.style("opacity", 0);
 });
-

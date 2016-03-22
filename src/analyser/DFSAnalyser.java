@@ -14,6 +14,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
+import org.apache.hadoop.hdfs.protocol.HdfsConstants.DatanodeReportType;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -23,8 +24,8 @@ public class DFSAnalyser {
 
 	private String url;
 
-	public DFSAnalyser(String url){
-		this.url = url;
+	public DFSAnalyser(/*String url*/){
+		//this.url = url;
 	}
 
 	private int indexInArray(JsonArray array, String id){
@@ -40,11 +41,16 @@ public class DFSAnalyser {
 		JsonObject json = new JsonObject();
 		JsonObject global = new JsonObject();
 		Configuration configuration = new Configuration();
-		DistributedFileSystem hdfs;
-		hdfs = (DistributedFileSystem) FileSystem.get(new URI(url), configuration);
-		DatanodeInfo[] dataNodes = hdfs.getDataNodeStats();
+		configuration.addResource("hdfs-site.xml");
+		configuration.addResource("core-site.xml");
+		configuration.addResource("mapred-site.xml");
+		DistributedFileSystem hdfs = new DistributedFileSystem();
+		FileSystem fs = FileSystem.get(/*new URI(url),*/ configuration);
+		hdfs = (DistributedFileSystem) fs;
+		hdfs.setConf(configuration);
+		DatanodeInfo[] dataNodes = hdfs.getDataNodeStats(DatanodeReportType.ALL);
 		json.add("summary", new JsonArray());
-		global.addProperty("used", hdfs.getContentSummary(new Path("/")).getSpaceConsumed());
+		global.addProperty("used", hdfs.getStatus().getUsed());
 		global.addProperty("unused", hdfs.getStatus().getRemaining());
 		json.get("summary").getAsJsonArray().add(global);
 		for(int i = 0; i < dataNodes.length; i++){
@@ -105,12 +111,15 @@ public class DFSAnalyser {
 		return json_f.toString();
 	}
 
-	public TreeMap<String,Map<String, Long>> getHDFSContent(String directory) throws IllegalArgumentException, IOException, URISyntaxException{
+	public TreeMap<String,Map<String, Long>> getHDFSContent(/*String directory*/) throws IllegalArgumentException, IOException, URISyntaxException{
 		TreeMap<String,Map<String, Long>> structure = new TreeMap<String, Map<String, Long>>();
 		Configuration configuration = new Configuration();
+		configuration.addResource("hdfs-site.xml");
+		configuration.addResource("core-site.xml");
+		configuration.addResource("mapred-site.xml");
 		FileSystem hdfs;
-		hdfs = FileSystem.get(new URI(url), configuration);
-		RemoteIterator<LocatedFileStatus> it = hdfs.listFiles(new Path(url+directory), true);
+		hdfs = FileSystem.get(/*new URI(url),*/ configuration);
+		RemoteIterator<LocatedFileStatus> it = hdfs.listFiles(new Path("/")/*url+directory)*/, true);
 		while(it.hasNext())
 		{
 			LocatedFileStatus next = it.next();
@@ -118,7 +127,7 @@ public class DFSAnalyser {
 			String name = next.getPath().getName();
 			Long size = next.getLen();
 			String parentPath = path.substring(0, path.lastIndexOf("/"));
-			parentPath = parentPath.replace(url, "");
+			parentPath = parentPath.replace(configuration.get("fs.defaultFS"), "");
 			if(structure.get(parentPath) == null)
 				structure.put(parentPath, new HashMap<String,Long>());
 			structure.get(parentPath).put(name, size);
