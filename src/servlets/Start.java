@@ -27,24 +27,7 @@ public class Start extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("coucou");
-		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1
-		response.setHeader("Pragma", "no-cache"); // HTTP 1.0
-		response.setDateHeader("Expires", 0); // Proxies.
-		Cookie[] cookies = null;
-		cookies = request.getCookies();
-		boolean isok = false;
-		if(cookies != null){
-			for(int i= 0; i < cookies.length; i++){
-				if(cookies[i].getName().equals("url"))
-					isok = true;
-			}			
-		}
-		if(isok)
-			request.getRequestDispatcher("hdfsVisualizer.html").forward(request, response);
-		else
-			request.getRequestDispatcher("url.html").forward(request, response);			
-		
+		request.getRequestDispatcher("hdfsVisualizer.html").forward(request, response);
 	}
 
 	/**

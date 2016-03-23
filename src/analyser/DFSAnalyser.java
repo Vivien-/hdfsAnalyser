@@ -46,12 +46,7 @@ public class DFSAnalyser {
 		configuration.addResource("mapred-site.xml");
 		DistributedFileSystem hdfs = new DistributedFileSystem();
 		FileSystem fs = FileSystem.get(/*new URI(url),*/ configuration);
-		try{
 		hdfs = (DistributedFileSystem) fs;
-		}
-		catch(ClassCastException e){
-			e.printStackTrace();
-		}
 		hdfs.setConf(configuration);
 		DatanodeInfo[] dataNodes = hdfs.getDataNodeStats(DatanodeReportType.ALL);
 		json.add("summary", new JsonArray());

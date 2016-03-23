@@ -31,33 +31,16 @@ public class FileContent extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1
-		response.setHeader("Pragma", "no-cache"); // HTTP 1.0
-		response.setDateHeader("Expires", 0); // Proxies.
-		Cookie[] cookies = request.getCookies();
 		String json = "";
-		boolean isok = false;
-		if(cookies != null){
-			for(int i = 0; i < cookies.length; i++){
-				if(cookies[i].getName().equals("url")){
-					try {
-						DFSAnalyser dfs = new DFSAnalyser(/*cookies[i].getValue()*/);
-						json = dfs.jsonify(dfs.getHDFSContent(/*""*/));
-						isok = true;
-					} catch (IllegalArgumentException e) {
-						isok = false;
-						e.printStackTrace();
-					} catch (URISyntaxException e) {
-						isok = false;
-						e.printStackTrace();
-					}
-				}
-			}
+		DFSAnalyser dfs = new DFSAnalyser(/*cookies[i].getValue()*/);
+		try {
+			json = dfs.jsonify(dfs.getHDFSContent(/*""*/));
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
 		}
-		if(isok)
-			response.getWriter().print(json);
-		else
-			request.getRequestDispatcher("url.html").forward(request, response);	
+		response.getWriter().print(json);
 	}
 
 	/**
