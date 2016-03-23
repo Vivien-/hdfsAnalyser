@@ -40,10 +40,10 @@ public class DFSAnalyser {
 	public String diskUsage() throws IOException, URISyntaxException{
 		JsonObject json = new JsonObject();
 		JsonObject global = new JsonObject();
-		Configuration configuration = new Configuration();
-		configuration.addResource("hdfs-site.xml");
-		configuration.addResource("core-site.xml");
-		configuration.addResource("mapred-site.xml");
+		String cf = System.getenv("HADOOP_CONF");
+		Path p = new Path(cf);
+		Configuration configuration = new Configuration(true);
+		configuration.addResource(p);
 		DistributedFileSystem hdfs = new DistributedFileSystem();
 		FileSystem fs = FileSystem.get(/*new URI(url),*/ configuration);
 		hdfs = (DistributedFileSystem) fs;
@@ -113,10 +113,10 @@ public class DFSAnalyser {
 
 	public TreeMap<String,Map<String, Long>> getHDFSContent(/*String directory*/) throws IllegalArgumentException, IOException, URISyntaxException{
 		TreeMap<String,Map<String, Long>> structure = new TreeMap<String, Map<String, Long>>();
-		Configuration configuration = new Configuration();
-		configuration.addResource("hdfs-site.xml");
-		configuration.addResource("core-site.xml");
-		configuration.addResource("mapred-site.xml");
+		String cf = System.getenv("HADOOP_CONF");
+		Path p = new Path(cf);
+		Configuration configuration = new Configuration(true);
+		configuration.addResource(p);
 		FileSystem hdfs;
 		hdfs = FileSystem.get(/*new URI(url),*/ configuration);
 		RemoteIterator<LocatedFileStatus> it = hdfs.listFiles(new Path("/")/*url+directory)*/, true);
