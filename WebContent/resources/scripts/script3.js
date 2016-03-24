@@ -119,7 +119,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 
 	$("#center").text(formatBytes(root.value, 2));
 
-	var children_sorted = root.children.sort(function(a,b){
+	var children_sorted_ = root.children.sort(function(a,b){
 		if(a.value > b.value)
 			return -1;
 		else if (a.value < b.value)
@@ -128,10 +128,18 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 			return 0;
 	});
 
-	for(var i = 0; i < children_sorted.length; i++){
-		var child = children_sorted[i];
+	var children_sorted = [];
+	var nb_undefined = 0;
+	for(var i = 0; i < children_sorted_.length; i++){
+		var child = children_sorted_[i];
+		if(typeof child.name === "undefined")
+			nb_undefined++;
 		var col = d3.select(child)[0][0].fill.toString();
-		$("#infos").append("<div class='node'><figure class='circle' style='background: " + col + "'></figure><span class='info' style='color: " + col + "'> " + child.name + "</span><span class='right' style='color: white'> " + formatBytes(child.value,2) + "</span></div><div style='clear:both;'></div>");
+		var folder_icon = '';
+		if(typeof child.children != "undefined")
+			folder_icon = '<i class="fa fa-folder"></i>';
+		$("#infos").append("<div class='node'>"+folder_icon+"<figure class='circle' style='background: " + col + "'></figure><span class='info' style='color: " + col + "'> " + child.name + "</span><span class='right' style='color: white'> " + formatBytes(child.value,2) + "</span></div><div style='clear:both;'></div>");
+		children_sorted[i] = child;
 	}
 
 	for(var i = 0; i < children_sorted.length; i++){
@@ -143,6 +151,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 			for(var j = 0; j < root.children.length; j++) {
 				if(root.children[j].name === children_sorted[idx].name) {
 					idx = j;
+					break;
 				}
 			}
 			zoomIn(root.children[idx]);
@@ -218,12 +227,21 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 		})
 
 		$("#infos").empty();
+		if(typeof root.parent != "undefined") {
+			$("#infos").append("<div class='node' id='prevFolder'><span class='info' style='color: #fff'>..</span></div>");
+			$("#prevFolder").click(function(event){
+				zoomIn(root.parent);
+			});
+		}
 		var val = 0;
 		for(var i = 0; i < children_sorted.length; i++){
 			val += root.children[i].value;
 			var child = children_sorted[i];
 			var col = d3.select(child)[0][0].fill.toString();
-			$("#infos").append("<div class='node'><figure class='circle' style='background: " + col + "'></figure><span class='info' style='color: "+ col +"'>" + child.name + "</span><span class='right' style='color: white'> " + formatBytes(child.value,2) + "</span></div><div style='clear:both;'></div>");
+			var folder_icon = '';
+			if(typeof child.children != "undefined")
+				folder_icon = '<i class="fa fa-folder"></i>';
+			$("#infos").append("<div class='node'>"+ folder_icon +" <figure class='circle' style='background: " + col + "'></figure><span class='info' style='color: "+ col +"'>" + child.name + "</span><span class='right' style='color: white'> " + formatBytes(child.value,2) + "</span></div><div style='clear:both;'></div>");
 		}
 		$("#center").text(formatBytes(val,2));
 
@@ -270,13 +288,24 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 		});
 
 		for(var i = 0; i < children_sorted.length; i++){
-			var $thisDiv = $("#infos").children().eq(i*2);
+			var iterator = 2*i;
+			if(typeof root.parent != "undefined")
+				iterator = 2*i + 1;
+			var $thisDiv = $("#infos").children().eq(iterator);
 			$thisDiv.click(function(event){
-				var thatname = event.currentTarget.textContent.split(" ")[0];
+				var tokens = event.currentTarget.textContent.split(" ");
+				var thatname = '';
+				//stop at tokens.length - 2 because we concatenate the whole name except the size at the end of the line
+				for(var k = 0; k < tokens.length - 2; k++)  {
+					thatname += tokens[k];
+					if(k!=tokens.length - 3 && k != 0)
+						thatname += " ";
+				}
 				var idx = 0;
 				for(var j = 0; j < root.children.length; j++) {
 					if(root.children[j].name === thatname) {
 						idx = j;
+						break;
 					}
 				}
 				zoomIn(root.children[idx]);
