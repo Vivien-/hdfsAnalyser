@@ -131,7 +131,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 	for(var i = 0; i < children_sorted.length; i++){
 		var child = children_sorted[i];
 		var col = d3.select(child)[0][0].fill.toString();
-		$("#infos").append("<div><figure class='circle' style='background: " + col + "'></figure><span class='info' style='color: " + col + "'> " + child.name + "</span><span class='right' style='color: white'> " + formatBytes(child.value,2) + "</span></div><div style='clear:both;'></div>");
+		$("#infos").append("<div class='node'><figure class='circle' style='background: " + col + "'></figure><span class='info' style='color: " + col + "'> " + child.name + "</span><span class='right' style='color: white'> " + formatBytes(child.value,2) + "</span></div><div style='clear:both;'></div>");
 	}
 
 	for(var i = 0; i < children_sorted.length; i++){
@@ -140,9 +140,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 			var idx = $(event.currentTarget).index();
 			//because there is hidden div that break the float: right
 			idx = idx/2;
-			console.log(children_sorted[i].name);
 			for(var j = 0; j < root.children.length; j++) {
-				console.log(root.children[j].name, ",", children_sorted[idx].name, root.children[j].name  === children_sorted[idx].name);
 				if(root.children[j].name === children_sorted[idx].name) {
 					idx = j;
 				}
@@ -225,7 +223,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 			val += root.children[i].value;
 			var child = children_sorted[i];
 			var col = d3.select(child)[0][0].fill.toString();
-			$("#infos").append("<div><figure class='circle' style='background: " + col + "'></figure><span class='info' style='color: "+ col +"'>" + child.name + "</span><span class='right' style='color: white'> " + formatBytes(child.value,2) + "</span></div><div style='clear:both;'></div>");
+			$("#infos").append("<div class='node'><figure class='circle' style='background: " + col + "'></figure><span class='info' style='color: "+ col +"'>" + child.name + "</span><span class='right' style='color: white'> " + formatBytes(child.value,2) + "</span></div><div style='clear:both;'></div>");
 		}
 		$("#center").text(formatBytes(val,2));
 

@@ -159,3 +159,11 @@ path text {
 #replication {
 	color: white;
 }
+
+.node {
+	cursor: pointer;	
+}
+
+.node:hover  {
+	background: #2C2C2C;
+}
