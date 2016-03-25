@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -15,6 +16,13 @@ import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants.DatanodeReportType;
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
+import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
+import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
+import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.thrift.TException;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -41,6 +49,7 @@ public class DFSAnalyser {
 		JsonObject json = new JsonObject();
 		JsonObject global = new JsonObject();
 		String cf = System.getenv("HADOOP_CONF");
+		System.out.println(cf);
 		Path p = new Path(cf);
 		Configuration configuration = new Configuration(true);
 		configuration.addResource(p);
@@ -114,6 +123,7 @@ public class DFSAnalyser {
 	public TreeMap<String,Map<String, Long>> getHDFSContent(/*String directory*/) throws IllegalArgumentException, IOException, URISyntaxException{
 		TreeMap<String,Map<String, Long>> structure = new TreeMap<String, Map<String, Long>>();
 		String cf = System.getenv("HADOOP_CONF");
+	
 		Path p = new Path(cf);
 		Configuration configuration = new Configuration(true);
 		configuration.addResource(p);
@@ -134,4 +144,50 @@ public class DFSAnalyser {
 		}
 		return structure;
 	}
+	
+	public String getHiveContent() throws NoSuchObjectException, TException, IllegalArgumentException, IOException{
+		HiveConf hiveConf = new HiveConf();
+		String hiveCf = System.getenv("HIVE_CONF");
+		System.out.println(hiveCf);
+		String hdfsCf = System.getenv("HADOOP_CONF");
+		Path hivep = new Path(hiveCf);
+		Path hdfsp = new Path(hdfsCf);
+		hiveConf.addResource(hivep);
+		hiveConf.addResource(hdfsp);
+		HiveMetaStoreClient client = new HiveMetaStoreClient(hiveConf);
+		
+		
+//		Configuration hdfsConf = new Configuration();
+//		String hdfsCf = System.getenv("HADOOP_CONF");
+//		Path hdfsp = new Path(hdfsCf);
+//		hdfsConf.addResource(hdfsp);
+		DistributedFileSystem hdfs = new DistributedFileSystem();
+		FileSystem fs = FileSystem.get(/*new URI(url),*/ hiveConf);
+		hdfs = (DistributedFileSystem) fs;
+		hdfs.setConf(hiveConf);
+		
+		
+		List<String> dbs = client.getAllDatabases();
+		System.out.println(dbs);
+		
+		String json = "";
+		for(String db:dbs){
+			List<String> tables = client.getAllTables(db);
+			System.out.println(tables);
+			for(String tb:tables){
+				Table table = client.getTable(db, tb);
+				String name = tb;
+				String location = table.getSd().getLocation();
+				String type = client.getType(tb).getName();
+				int last = table.getLastAccessTime();
+				long size = hdfs.getContentSummary(new Path(location)).getLength();
+				json += name+" "+location+" "+type+" "+last+" "+size;
+				System.out.println("hello");
+				System.out.println(name+" "+location+" "+type+" "+last+" "+size);
+			}
+		}
+		
+		return json;
+	}
+	
 }
