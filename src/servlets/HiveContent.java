@@ -49,6 +49,9 @@ public class HiveContent extends HttpServlet {
 		} catch (TException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		response.getWriter().print(json);
 	}

@@ -3,6 +3,7 @@ package analyser;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,11 +18,13 @@ import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants.DatanodeReportType;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.thrift.TException;
 
 import com.google.gson.JsonArray;
@@ -145,30 +148,31 @@ public class DFSAnalyser {
 		return structure;
 	}
 	
-	public String getHiveContent() throws NoSuchObjectException, TException, IllegalArgumentException, IOException{
-		HiveConf hiveConf = new HiveConf();
+	public String getHiveContent() throws NoSuchObjectException, TException, IllegalArgumentException, IOException, ClassNotFoundException{
+		//Getting Environnement variables locations
 		String hiveCf = System.getenv("HIVE_CONF");
-		System.out.println(hiveCf);
 		String hdfsCf = System.getenv("HADOOP_CONF");
+
+		//Setting paths
 		Path hivep = new Path(hiveCf);
 		Path hdfsp = new Path(hdfsCf);
+		
+		//Setting HiveConf
+		HiveConf hiveConf = null;
+		hiveConf =  new HiveConf();
 		hiveConf.addResource(hivep);
 		hiveConf.addResource(hdfsp);
 		HiveMetaStoreClient client = new HiveMetaStoreClient(hiveConf);
 		
-		
-//		Configuration hdfsConf = new Configuration();
-//		String hdfsCf = System.getenv("HADOOP_CONF");
-//		Path hdfsp = new Path(hdfsCf);
-//		hdfsConf.addResource(hdfsp);
-		DistributedFileSystem hdfs = new DistributedFileSystem();
+		//Setting HDFS conf
+		DistributedFileSystem hdfs = null;
 		FileSystem fs = FileSystem.get(/*new URI(url),*/ hiveConf);
 		hdfs = (DistributedFileSystem) fs;
 		hdfs.setConf(hiveConf);
 		
 		
 		List<String> dbs = client.getAllDatabases();
-		System.out.println(dbs);
+		System.out.println("all dbs :"+dbs);
 		
 		String json = "";
 		for(String db:dbs){
@@ -178,15 +182,13 @@ public class DFSAnalyser {
 				Table table = client.getTable(db, tb);
 				String name = tb;
 				String location = table.getSd().getLocation();
-				String type = client.getType(tb).getName();
+				String type = table.getTableType();
 				int last = table.getLastAccessTime();
 				long size = hdfs.getContentSummary(new Path(location)).getLength();
 				json += name+" "+location+" "+type+" "+last+" "+size;
-				System.out.println("hello");
 				System.out.println(name+" "+location+" "+type+" "+last+" "+size);
 			}
 		}
-		
 		return json;
 	}
 	
