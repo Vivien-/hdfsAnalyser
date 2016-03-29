@@ -172,24 +172,33 @@ public class DFSAnalyser {
 		
 		
 		List<String> dbs = client.getAllDatabases();
-		System.out.println("all dbs :"+dbs);
-		
-		String json = "";
+		JsonObject json = new JsonObject();
+		json.add("dbs", new JsonArray());
+		JsonObject dbJson = null;
 		for(String db:dbs){
+			dbJson = new JsonObject();
+			dbJson.addProperty("name", db);
 			List<String> tables = client.getAllTables(db);
-			System.out.println(tables);
+			JsonArray tablesJson = new JsonArray();
 			for(String tb:tables){
+				JsonObject tbJson = new JsonObject();
 				Table table = client.getTable(db, tb);
 				String name = tb;
 				String location = table.getSd().getLocation();
 				String type = table.getTableType();
 				int last = table.getLastAccessTime();
 				long size = hdfs.getContentSummary(new Path(location)).getLength();
-				json += name+" "+location+" "+type+" "+last+" "+size;
-				System.out.println(name+" "+location+" "+type+" "+last+" "+size);
+				tbJson.addProperty("name", name);
+				tbJson.addProperty("location", location);
+				tbJson.addProperty("type", type);
+				tbJson.addProperty("last", last);
+				tbJson.addProperty("size", size);
+				tablesJson.add(tbJson);
 			}
+			dbJson.add("tables", tablesJson);
 		}
-		return json;
+		json.get("dbs").getAsJsonArray().add(dbJson);
+		return json.toString();
 	}
 	
 }
