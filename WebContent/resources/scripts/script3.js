@@ -52,6 +52,13 @@ function mouseOutArc(){
 	return tooltip.style("opacity", 0);
 }
 
+var tip = d3.tip()
+.attr('class', 'd3-tip')
+.offset([50, 50])
+.html(function(d) {
+  return d.name + "<br>" + "<span style='color:orangered'>" + formatBytes(d.value, 2) + "</span>";
+});
+
 var svg = d3.select("body").append("svg")
 .attr("width", (numberOfLayers*2*radius) + "px")
 .attr("height", (numberOfLayers*2*radius) + "px")
@@ -60,6 +67,8 @@ var svg = d3.select("body").append("svg")
 .style("left",margin.left + "px")
 .append("g")
 .attr("transform", "translate(" + (numberOfLayers*radius) + "," + (numberOfLayers*radius) + ")");
+
+svg.call(tip);
 
 var partition = d3.layout.partition()
 .sort(function(a, b) { return d3.ascending(a.name, b.name); })
@@ -164,9 +173,8 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 	.filter(function(d) { return (Math.abs(d.x - (d.x + d.dx)) > min_degree_arc_filter *(Math.PI)/180); })
 	.attr("d", arc)
 	.style("fill", function(d) { return fill(d); })
-	.on("mouseover", mouseOverArc)
-	.on("mousemove", mouseMoveArc)
-	.on("mouseout", mouseOutArc)
+	.on('mouseover', tip.show)
+	.on('mouseout', tip.hide)
 	.each(function(d) { this._current = updateArc(d); })
 	.on("click", zoomIn);
 
@@ -268,9 +276,8 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 			.style("fill-opacity", function(d) { return d.depth === 2 - (root === p) ? 1 : 0; })
 			.style("fill", function(d) { return d.fill; })
 			.on("click", zoomIn)
-			.on("mouseover", mouseOverArc)
-			.on("mousemove", mouseMoveArc)
-			.on("mouseout", mouseOutArc)
+			.on('mouseover', tip.show)
+			.on('mouseout', tip.hide)
 			.each(function(d) { this._current = enterArc(d); });
 
 			path.transition()
