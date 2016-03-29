@@ -54,7 +54,10 @@ function mouseOutArc(){
 
 var tip = d3.tip()
 .attr('class', 'd3-tip')
-.offset([50, 50])
+.direction("e")
+.offset(function() {
+  return [0, 5]
+})
 .html(function(d) {
   return d.name + "<br>" + "<span style='color:orangered'>" + formatBytes(d.value, 2) + "</span>";
 });

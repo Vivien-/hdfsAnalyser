@@ -197,3 +197,16 @@ path text {
   color: #fff;
   border-radius: 2px;
 }
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after, .d3-tip:before {
+	content: "";
+	position: absolute;
+	height: 0;
+	width: 0;
+	left: -20px;
+	top: 5px;
+	border: 10px solid transparent;
+	border-right: 10px solid rgba(0, 0, 0, 0.8);
+	opacity: 0.7;
+}
