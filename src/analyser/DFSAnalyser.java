@@ -79,6 +79,7 @@ public class DFSAnalyser {
 	}
 
 	public String jsonify(TreeMap<String,Map<String, Long>> treemap) {
+		boolean first = true;
 		JsonObject json = new JsonObject();
 		JsonObject json_f = new JsonObject();
 		json_f.addProperty("name", "/");
@@ -89,7 +90,10 @@ public class DFSAnalyser {
 
 			//create the root node
 			if(json.get("name") == null || !json.get("name").getAsString().equals(tokens[0])) {
-				json_f.get("children").getAsJsonArray().add(json);
+				if(!first)
+					json_f.get("children").getAsJsonArray().add(json);
+				else 
+					first = false;
 				json = new JsonObject();
 				json.addProperty("name", tokens[0]);
 				json.add("children", new JsonArray());

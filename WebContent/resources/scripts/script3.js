@@ -235,7 +235,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 		}
 		var val = 0;
 		for(var i = 0; i < children_sorted.length; i++){
-			val += root.children[i].value;
+			val += root.children[i].sum;
 			var child = children_sorted[i];
 			var col = d3.select(child)[0][0].fill.toString();
 			var folder_icon = '';
