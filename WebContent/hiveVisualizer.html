@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Insert title here</title>
-<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js" charset="utf-8"></script>
 <script src="resources/scripts/jquery-1.12.1.min.js" charset="utf-8"></script>
-<script src="resources/scripts/tablesorter.min.js" charset="utf-8"></script>
 <script src="resources/scripts/d3.min.js" charset="utf-8"></script>
 <script src="resources/scripts/d3.tip.v0.6.3.js" charset="utf-8"></script>
 
@@ -19,7 +17,13 @@
 <div id="databases">
 		<table class="table-sort tablesorter" cellspacing="0" cellpadding="0">
 			<thead>
+					<tr>
+					<th></th>
+					<th>Databases</th>
+					<th></th>
+					</tr>
 				<tr>
+					
 					<th><span>Name</span></th>
 					<th><span>Location</span></th>
 					<th><span>Size</span></th>
@@ -32,12 +36,9 @@
 <div id="chartTables"></div>
 <div id="internals">
 		<table class="table-sort" cellspacing="0" cellpadding="0">
-			<thead>
-				<tr>
-					<th><span>Name</span></th>
-					<th><span>Location</span></th>
-					<th><span>Size</span></th>
-				</tr>
+			<thead id="internals_thead">
+
+				
 			</thead>
 			<tbody id="internals_tbody">
 			</tbody>
@@ -45,7 +46,8 @@
 </div>
 <div id="externals">
 		<table class="table-sort" cellspacing="0" cellpadding="0">
-			<thead>
+			<thead id="externals_thead">
+
 				<tr>
 					<th><span>Name</span></th>
 					<th><span>Location</span></th>

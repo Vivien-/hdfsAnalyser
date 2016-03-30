@@ -212,3 +212,9 @@ h1 {
 .table-sort tbody tr td.lalign {
   text-align: left;
 }
+
+
+
+path{
+	cursor:pointer;
+}

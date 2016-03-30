@@ -138,7 +138,17 @@ var color = d3.scale.category10();
 			return color(d.data.label);
 		})
 		.on("mouseover", tip.show)
-		.on("mouseout", tip.hide);
+		.on("mouseout", tip.hide)
+		.on("click", (function(e){
+			var name = e.data.label;
+			//No need to send a request
+			if(typeof dbInfo[name] != 'undefined') {
+				getDBInfoCallBack(dbInfo[name], {"x": x/2-20, "y": y/2-20});
+			} // we need to send a request
+			else {
+				httpGetAsync("/HadoopAnalyser/Tables?database="+name, getDBInfoCallBack);				
+			}
+		}));
 		
 		if(firstLoad) {
 			httpGetAsync("/HadoopAnalyser/Tables?database="+json_g.dbs[0].label, getDBInfoCallBack);
@@ -156,6 +166,10 @@ var color = d3.scale.category10();
 	function appendTablesInfo(json) {
 		$("#externals_tbody").empty();
 		$("#internals_tbody").empty();
+		$("#externals_thead").empty();
+		$("#internals_thead").empty();
+		$("#externals_thead").append("<tr><th></th><th>Externals for <span style='color:"+color(json.database)+"'>"+json.database+"</span></th><th></th></tr><tr><th><span>Name</span></th><th><span>Location</span></th><th><span>Size</span></th></tr>");
+		$("#internals_thead").append("<tr><th></th><th>Internals for <span style='color:"+color(json.database)+"'>"+json.database+"</span></th><th></th></tr><tr><th><span>Name</span></th><th><span>Location</span></th><th><span>Size</span></th></tr>");
 		for(var i = 0; i<json.tbls.length; i++){
 			if(json.tbls[i].type == "EXTERNAL_TABLE"){
 				var col = color(json.tbls[i].label);
@@ -193,7 +207,4 @@ var color = d3.scale.category10();
 		})
 	}
 	httpGetAsync("/HadoopAnalyser/Databases", drawDatabasesPie, f2);
-	$(function() {
-		$('.table-sort').tablesorter();
-	});
 })(window.d3);
