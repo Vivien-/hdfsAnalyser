@@ -20,6 +20,7 @@ import org.apache.hadoop.hdfs.protocol.HdfsConstants.DatanodeReportType;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
+import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
@@ -235,16 +236,16 @@ public class DFSAnalyser {
 		json.add("dbs", new JsonArray());
 		JsonObject dbJson = null;
 		for(String db:dbs){
+			Database database = client.getDatabase(db);
 			dbJson = new JsonObject();
 			dbJson.addProperty("label", db);
+			dbJson.addProperty("location", database.getLocationUri().replace(hiveConf.get("fs.defaultFS"), ""));
 			int sum = 0;
 			List<String> tables = client.getAllTables(db);
 			for(String tb:tables){
 				Table table = client.getTable(db, tb);
 				String location = table.getSd().getLocation();
 				long size = hdfs.getContentSummary(new Path(location)).getLength();
-				location = location.replace(hiveConf.get("fs.defaultFS"), "");
-				dbJson.addProperty("location", location);
 				sum += size;
 			}
 			dbJson.addProperty("count", sum);
