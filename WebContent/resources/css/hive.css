@@ -89,5 +89,11 @@ html, body {
 }
 
 .overflow {
+	cursor: pointer;
 	overflow:auto;
+	display: inline-block; 
+}
+
+.overflow:hover  {
+	background: #2C2C2C;
 }

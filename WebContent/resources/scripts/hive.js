@@ -24,7 +24,7 @@ $("#databases")
 .css("position", "absolute")
 .css("left", (10) + "px")
 .css("top", (y/2 + 10) + "px")
-.css("width", (x/2 - 20)+ "px")
+.css("width", (x/2 - 10)+ "px")
 .css("height", (y/2 - 10) + "px");
 
 var color = d3.scale.category10();
@@ -38,6 +38,7 @@ var color = d3.scale.category10();
 		xmlHttp.onreadystatechange = function() { 
 			if (xmlHttp.readyState == 4 && xmlHttp.status == 200){
 				if(typeof callback2 != 'undefined') {
+					json_g = JSON.parse(xmlHttp.responseText);
 					callback1(xmlHttp.responseText, {"x": x/2-20, "y": y/2-20});
 					callback2(xmlHttp.responseText);
 				} else
@@ -52,6 +53,8 @@ var color = d3.scale.category10();
 	//global variable containing the tables json for each database (so we don't have to send a request twice for the same database)
 	var dbInfo = {};
 	var hasCreatedDB = false;
+	var firstLoad = true;
+	var json_g;
 	
 	function formatBytes(bytes,decimals) {
 		if(bytes == 0) return '0 o';
@@ -119,7 +122,12 @@ var color = d3.scale.category10();
 			return color(d.data.label);
 		})
 		.on("mouseover", tip.show)
-		.on("mouseout", tip.hide);	    
+		.on("mouseout", tip.hide);
+		
+		if(firstLoad) {
+			httpGetAsync("/HadoopAnalyser/Tables?database="+json_g.dbs[0].label, getDBInfoCallBack);
+			firstLoad = false;
+		}
 	}
 
 	function getDBInfoCallBack(json, size) {
@@ -132,7 +140,7 @@ var color = d3.scale.category10();
 		$("#databases").append("<span style='color: white'>Name : Location</span> <span class='right' style='color: white'>Size</span><div style='clear:both;'></div><br>");
 		for(var i = 0; i<json.dbs.length; i++){
 			var col = color(json.dbs[i].label);
-			$("#databases").append("<div class='overflow db-info' id='"+json.dbs[i].label+"'> <figure class='circle' style='background: " + col + "'></figure><span class='info' style='color: " + col + ";'> " + json.dbs[i].label + ":  hdfs://localhost:9000/user/hive/warehouse/test.db/toto hdfs://localhost:9000/user/hive/warehouse/test.db/toto"+json.dbs[i].location+"</span><span class='right' style='color: white'> " + formatBytes(json.dbs[i].count,2) + "</span></div><div style='clear:both;'></div>");
+			$("#databases").append("<div class='overflow db-info' id='"+json.dbs[i].label+"'> <figure class='circle' style='background: " + col + "'></figure><span class='info' style='color: " + col + ";'> " + json.dbs[i].label + ": "  +json.dbs[i].location+"</span><span class='right' style='color: white'> " + formatBytes(json.dbs[i].count,2) + "</span></div><div style='clear:both;'></div>");
 		}
 	}
 	
@@ -141,7 +149,7 @@ var color = d3.scale.category10();
 		$("#databases").append("<span style='color: white'>Name : Location</span> <span class='right' style='color: white'>Size</span><div style='clear:both;'></div><br>");
 		for(var i = 0; i<json.dbs.length; i++){
 			var col = color(json.dbs[i].label);
-			$("#databases").append("<div class='overflow db-info' id='"+json.dbs[i].label+"'> <figure class='circle' style='background: " + col + "'></figure><span class='info' style='color: " + col + ";'> " + json.dbs[i].label + ":  hdfs://localhost:9000/user/hive/warehouse/test.db/toto hdfs://localhost:9000/user/hive/warehouse/test.db/toto"+json.dbs[i].location+"</span><span class='right' style='color: white'> " + formatBytes(json.dbs[i].count,2) + "</span></div><div style='clear:both;'></div>");
+			$("#databases").append("<div class='overflow db-info' id='"+json.dbs[i].label+"'> <figure class='circle' style='background: " + col + "'></figure><span class='info' style='color: " + col + ";'> " + json.dbs[i].label + " : " + json.dbs[i].location+"</span></div><span class='right' style='color: white'> " + formatBytes(json.dbs[i].count,2) + "</span></div><div style='clear:both;'>");
 		}
 		$(".db-info").click(function(e) {
 			var name = e.currentTarget.id;
