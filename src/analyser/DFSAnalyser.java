@@ -271,6 +271,7 @@ public class DFSAnalyser {
 		hdfs = (DistributedFileSystem) fs;
 		hdfs.setConf(hiveConf);
 		JsonObject json = new JsonObject();
+		json.addProperty("database", database);
 		json.add("tbls", new JsonArray());
 		List<String> tables = client.getAllTables(database);
 		for(String tb:tables){
