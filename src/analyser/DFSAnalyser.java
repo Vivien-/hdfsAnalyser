@@ -182,6 +182,9 @@ public class DFSAnalyser {
 		for(String db:dbs){
 			dbJson = new JsonObject();
 			dbJson.addProperty("name", db);
+			String loc = client.getDatabase(db).getLocationUri();
+			dbJson.addProperty("location", loc);
+			int sum = 0;
 			List<String> tables = client.getAllTables(db);
 			JsonArray tablesJson = new JsonArray();
 			for(String tb:tables){
@@ -198,11 +201,55 @@ public class DFSAnalyser {
 				tbJson.addProperty("last", last);
 				tbJson.addProperty("size", size);
 				tablesJson.add(tbJson);
+				sum += size;
 			}
+			dbJson.addProperty("size", sum);
 			dbJson.add("tables", tablesJson);
 		}
 		json.get("dbs").getAsJsonArray().add(dbJson);
 		return json.toString();
 	}
 	
+	
+	public String databases() throws NoSuchObjectException, TException, IOException{
+		//Getting Environnement variables locations
+		String hiveCf = System.getenv("HIVE_CONF");
+		String hdfsCf = System.getenv("HADOOP_CONF");
+		//Setting paths
+		Path hivep = new Path(hiveCf);
+		Path hdfsp = new Path(hdfsCf);
+		//Setting HiveConf
+		HiveConf hiveConf = null;
+		hiveConf =  new HiveConf();
+		hiveConf.addResource(hivep);
+		hiveConf.addResource(hdfsp);
+		HiveMetaStoreClient client = new HiveMetaStoreClient(hiveConf);
+		//Setting HDFS conf
+		DistributedFileSystem hdfs = null;
+		FileSystem fs = FileSystem.get(/*new URI(url),*/ hiveConf);
+		hdfs = (DistributedFileSystem) fs;
+		hdfs.setConf(hiveConf);
+
+		List<String> dbs = client.getAllDatabases();
+		JsonObject json = new JsonObject();
+		json.add("dbs", new JsonArray());
+		JsonObject dbJson = null;
+		for(String db:dbs){
+			dbJson = new JsonObject();
+			dbJson.addProperty("label", db);
+			int sum = 0;
+			List<String> tables = client.getAllTables(db);
+			for(String tb:tables){
+				Table table = client.getTable(db, tb);
+				String location = table.getSd().getLocation();
+				dbJson.addProperty("location", location);
+				long size = hdfs.getContentSummary(new Path(location)).getLength();
+				sum += size;
+			}
+			dbJson.addProperty("count", sum);
+			json.get("dbs").getAsJsonArray().add(dbJson);
+		}
+		return json.toString();
+	}
+
 }
