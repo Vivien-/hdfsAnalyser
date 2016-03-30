@@ -138,17 +138,20 @@ var color = d3.scale.category10();
 			return color(d.data.label);
 		})
 		.on("mouseover", tip.show)
-		.on("mouseout", tip.hide)
-		.on("click", (function(e){
-			var name = e.data.label;
-			//No need to send a request
-			if(typeof dbInfo[name] != 'undefined') {
-				getDBInfoCallBack(dbInfo[name], {"x": x/2-20, "y": y/2-20});
-			} // we need to send a request
-			else {
-				httpGetAsync("/HadoopAnalyser/Tables?database="+name, getDBInfoCallBack);				
-			}
-		}));
+		.on("mouseout", tip.hide);
+		
+		if(firstLoad) {
+			path.on("click", (function(e){
+				var name = e.data.label;
+				//No need to send a request
+				if(typeof dbInfo[name] != 'undefined') {
+					getDBInfoCallBack(dbInfo[name], {"x": x/2-20, "y": y/2-20});
+				} // we need to send a request
+				else {
+					httpGetAsync("/HadoopAnalyser/Tables?database="+name, getDBInfoCallBack);				
+				}
+			}));
+		}
 		
 		if(firstLoad) {
 			httpGetAsync("/HadoopAnalyser/Tables?database="+json_g.dbs[0].label, getDBInfoCallBack);
@@ -182,21 +185,16 @@ var color = d3.scale.category10();
 				$("#internals_tbody").append("<tr class='db-info' id='"+json.tbls[i].label+"'><td class='lalign' style='color: " + col + ";'>" + json.tbls[i].label + "</td><td style='color: " + col + ";'>" + json.tbls[i].location + "</td> <td style='color: " + col + ";'> " + formatBytes(json.tbls[i].count,2) + "</td>");
 			}
 		}
-		$(function() {
-			$('.table-sort').tablesorter();
-		});
 	}
 	
 	function f2(json){
 		json = JSON.parse(json);
 		for(var i = 0; i<json.dbs.length; i++){
 			var col = color(json.dbs[i].label);
-			$("#databases_tbody").append("<tr class='db-info' id='"+json.dbs[i].label+"'><td class='lalign' style='color: " + col + ";'>" + json.dbs[i].label + "</td><td style='color: " + col + ";'>" + json.dbs[i].location + "</td> <td style='color: " + col + ";'> " + formatBytes(json.dbs[i].count,2) + "</td>");
+			$("#databases_tbody").append("<tr class='db-info db-onclick' id='"+json.dbs[i].label+"'><td class='lalign' style='color: " + col + ";'>" + json.dbs[i].label + "</td><td style='color: " + col + ";'>" + json.dbs[i].location + "</td> <td style='color: " + col + ";'> " + formatBytes(json.dbs[i].count,2) + "</td>");
 		}
-		$(".db-info").click(function(e) {
+		$(".db-onclick").click(function(e) {
 			var name = e.currentTarget.id;
-			console.log(e.currentTarget);
-			console.log(name);
 			//No need to send a request
 			if(typeof dbInfo[name] != 'undefined') {
 				getDBInfoCallBack(dbInfo[name], {"x": x/2-20, "y": y/2-20});
