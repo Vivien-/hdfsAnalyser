@@ -92,8 +92,123 @@ html, body {
 	cursor: pointer;
 	overflow:auto;
 	display: inline-block; 
+	width: 100%;
 }
 
 .overflow:hover  {
 	background: #2C2C2C;
+}
+
+.button {
+	background-color: #4CAF50; /* Green */
+	border: none;
+	color: white;
+	padding: 5px 10px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	font-size: 13px;
+}
+
+.db-info {
+	cursor: pointer;
+}
+
+.db-info:hover {
+	background: #2C2C2C;
+}
+
+#externals, #internals, #databases {
+	overflow: auto;
+}
+
+/***** table ******/
+em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  vertical-align: baseline;
+  outline: none;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+html { overflow-y: scroll; }
+table { 
+  line-height: 1;
+  color: #585858;
+}
+
+br { display: block; line-height: 1.6em; } 
+
+article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section { display: block; }
+ol, ul { list-style: none; }
+
+input, textarea { 
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  outline: none; 
+}
+
+blockquote, q { quotes: none; }
+blockquote:before, blockquote:after, q:before, q:after { content: ''; content: none; }
+strong, b { font-weight: bold; } 
+
+table { border-collapse: collapse; border-spacing: 0; }
+
+h1 { 
+  font-family: 'Amarante', Tahoma, sans-serif;
+  font-weight: bold;
+  font-size: 3.6em;
+  line-height: 1.7em;
+  margin-bottom: 10px;
+  text-align: center;
+}
+#databases, #internals, #externals {
+  display: block;
+  margin: 0 auto;
+}
+
+.table-sort {
+  margin: 0 auto;
+  font-size: 0.8em;
+  margin-bottom: 15px;
+  border-radius: 5px;
+}
+
+.table-sort thead {
+  cursor: pointer;
+  background: #c9dff0;
+}
+.table-sort thead tr th { 
+  font-weight: bold;
+  padding: 8px 30px;
+  padding-left: 42px;
+}
+.table-sort thead tr th span { 
+  padding-right: 20px;
+  background-repeat: no-repeat;
+  background-position: 100% 100%;
+}
+
+.table-sort thead tr th.headerSortUp, .table-sort thead tr th.headerSortDown {
+  background: #acc8dd;
+}
+
+.table-sort tbody tr { 
+  color: #555;
+}
+.table-sort tbody tr td {
+  text-align: center;
+  padding: 5px 10px;
+}
+.table-sort tbody tr td.lalign {
+  text-align: left;
 }

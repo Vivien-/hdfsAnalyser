@@ -24,14 +24,14 @@ $("#databases")
 .css("position", "absolute")
 .css("left", (10) + "px")
 .css("top", (y/2 + 10) + "px")
-.css("width", (x/2 - 10)+ "px")
+.css("width", (x/2 - 50)+ "px")
 .css("height", (y/2 - 10) + "px");
 
 $("#externals")
 .css("position", "absolute")
 .css("left", (x/2 + 10) + "px")
 .css("top", (y/2 + 10) + "px")
-.css("width", (x/2 - 10)+ "px")
+.css("width", (x/2 - 50)+ "px")
 .css("height", (y/4 - 10) + "px");
 
 
@@ -39,7 +39,7 @@ $("#internals")
 .css("position", "absolute")
 .css("left", (x/2 + 10) + "px")
 .css("top", (y/2 + y/4 + 10) + "px")
-.css("width", (x/2 - 10)+ "px")
+.css("width", (x/2 - 50)+ "px")
 .css("height", (y/4 - 10) + "px");
 
 
@@ -154,36 +154,35 @@ var color = d3.scale.category10();
 	}
 	
 	function appendTablesInfo(json) {
-		$("#externals").empty();
-		$("#internals").empty();
-		console.log(json.tbls);
-		$("#externals").append("<span style='color: white'>Externals</span><div style='clear:both;'></div><br>");
-		$("#externals").append("<span style='color: white'>Name : Location</span> <span class='right' style='color: white'>Size</span><div style='clear:both;'></div><br>");
+		$("#externals_tbody").empty();
+		$("#internals_tbody").empty();
 		for(var i = 0; i<json.tbls.length; i++){
 			if(json.tbls[i].type == "EXTERNAL_TABLE"){
 				var col = color(json.tbls[i].label);
-				$("#externals").append("<div class='overflow db-info' id='"+json.tbls[i].label+"'> <figure class='circle' style='background: " + col + "'></figure><span class='info' style='color: " + col + ";'> " + json.tbls[i].label + ": "  +json.tbls[i].location+"</span><span class='right' style='color: white'> " + formatBytes(json.tbls[i].count,2) + "</span></div><div style='clear:both;'></div>");
+				$("#externals_tbody").append("<tr class='db-info' id='"+json.tbls[i].label+"'><td class='lalign' style='color: " + col + ";'>" + json.tbls[i].label + "</td><td style='color: " + col + ";'>" + json.tbls[i].location + "</td> <td style='color: " + col + ";'> " + formatBytes(json.tbls[i].count,2) + "</td>");
 			}
 		}
-		$("#internals").append("<span style='color: white'>Internals</span><div style='clear:both;'></div><br>");
-		$("#internals").append("<span style='color: white'>Name : Location</span> <span class='right' style='color: white'>Size</span><div style='clear:both;'></div><br>");
 		for(var i = 0; i<json.tbls.length; i++){
 			if(json.tbls[i].type == "MANAGED_TABLE"){
 				var col = color(json.tbls[i].label);
-				$("#internals").append("<div class='overflow db-info' id='"+json.tbls[i].label+"'> <figure class='circle' style='background: " + col + "'></figure><span class='info' style='color: " + col + ";'> " + json.tbls[i].label + ": "  +json.tbls[i].location+"</span><span class='right' style='color: white'> " + formatBytes(json.tbls[i].count,2) + "</span></div><div style='clear:both;'></div>");
+				$("#internals_tbody").append("<tr class='db-info' id='"+json.tbls[i].label+"'><td class='lalign' style='color: " + col + ";'>" + json.tbls[i].label + "</td><td style='color: " + col + ";'>" + json.tbls[i].location + "</td> <td style='color: " + col + ";'> " + formatBytes(json.tbls[i].count,2) + "</td>");
 			}
 		}
+		$(function() {
+			$('.table-sort').tablesorter();
+		});
 	}
 	
 	function f2(json){
 		json = JSON.parse(json);
-		$("#databases").append("<span style='color: white'>Name : Location</span> <span class='right' style='color: white'>Size</span><div style='clear:both;'></div><br>");
 		for(var i = 0; i<json.dbs.length; i++){
 			var col = color(json.dbs[i].label);
-			$("#databases").append("<div class='overflow db-info' id='"+json.dbs[i].label+"'> <figure class='circle' style='background: " + col + "'></figure><span class='info' style='color: " + col + ";'> " + json.dbs[i].label + " : " + json.dbs[i].location+"</span></div><span class='right' style='color: white'> " + formatBytes(json.dbs[i].count,2) + "</span></div><div style='clear:both;'>");
+			$("#databases_tbody").append("<tr class='db-info' id='"+json.dbs[i].label+"'><td class='lalign' style='color: " + col + ";'>" + json.dbs[i].label + "</td><td style='color: " + col + ";'>" + json.dbs[i].location + "</td> <td style='color: " + col + ";'> " + formatBytes(json.dbs[i].count,2) + "</td>");
 		}
 		$(".db-info").click(function(e) {
 			var name = e.currentTarget.id;
+			console.log(e.currentTarget);
+			console.log(name);
 			//No need to send a request
 			if(typeof dbInfo[name] != 'undefined') {
 				getDBInfoCallBack(dbInfo[name], {"x": x/2-20, "y": y/2-20});
@@ -194,4 +193,7 @@ var color = d3.scale.category10();
 		})
 	}
 	httpGetAsync("/HadoopAnalyser/Databases", drawDatabasesPie, f2);
+	$(function() {
+		$('.table-sort').tablesorter();
+	});
 })(window.d3);
