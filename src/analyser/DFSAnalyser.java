@@ -251,5 +251,42 @@ public class DFSAnalyser {
 		}
 		return json.toString();
 	}
+	
+	public String tables(String database) throws IOException, NoSuchObjectException, TException{
+		//Getting Environnement variables locations
+		String hiveCf = System.getenv("HIVE_CONF");
+		String hdfsCf = System.getenv("HADOOP_CONF");
+		//Setting paths
+		Path hivep = new Path(hiveCf);
+		Path hdfsp = new Path(hdfsCf);
+		//Setting HiveConf
+		HiveConf hiveConf = null;
+		hiveConf =  new HiveConf();
+		hiveConf.addResource(hivep);
+		hiveConf.addResource(hdfsp);
+		HiveMetaStoreClient client = new HiveMetaStoreClient(hiveConf);
+		//Setting HDFS conf
+		DistributedFileSystem hdfs = null;
+		FileSystem fs = FileSystem.get(/*new URI(url),*/ hiveConf);
+		hdfs = (DistributedFileSystem) fs;
+		hdfs.setConf(hiveConf);
+		JsonObject json = new JsonObject();
+		json.add("tbls", new JsonArray());
+		List<String> tables = client.getAllTables(database);
+		for(String tb:tables){
+			JsonObject tmp = new JsonObject();
+			Table table = client.getTable(database, tb);
+			String location = table.getSd().getLocation();
+			String type = table.getTableType();
+			long size = hdfs.getContentSummary(new Path(location)).getLength();
+			tmp.addProperty("name", tb);
+			tmp.addProperty("location", location);
+			tmp.addProperty("type", type);
+			tmp.addProperty("size", size);
+			json.get("tbls").getAsJsonArray().add(tmp);
+		}
+		return json.toString();
+
+	}
 
 }
