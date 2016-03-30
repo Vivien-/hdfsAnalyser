@@ -242,8 +242,9 @@ public class DFSAnalyser {
 			for(String tb:tables){
 				Table table = client.getTable(db, tb);
 				String location = table.getSd().getLocation();
-				dbJson.addProperty("location", location);
 				long size = hdfs.getContentSummary(new Path(location)).getLength();
+				location = location.replace(hiveConf.get("fs.defaultFS"), "");
+				dbJson.addProperty("location", location);
 				sum += size;
 			}
 			dbJson.addProperty("count", sum);
@@ -280,6 +281,7 @@ public class DFSAnalyser {
 			String location = table.getSd().getLocation();
 			String type = table.getTableType();
 			long size = hdfs.getContentSummary(new Path(location)).getLength();
+			location = location.replace(hiveConf.get("fs.defaultFS"), "");
 			tmp.addProperty("label", tb);
 			tmp.addProperty("location", location);
 			tmp.addProperty("type", type);
