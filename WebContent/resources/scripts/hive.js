@@ -72,6 +72,7 @@ var color = d3.scale.category10();
 			targetWaiter = "#waitChartTables";
 			target = "#chartTables";
 			data = json.tbls;
+			$(target).empty();
 		} else {
 			hasCreatedDB = true;
 			data = json.dbs;
