@@ -231,6 +231,8 @@ var color = d3.scale.category10();
 			else {
 				httpGetAsync("/HadoopAnalyser/Tables?database="+name, getDBInfoCallBack);				
 			}
+			$(".highlighted").removeClass("highlighted");
+			$("#"+name).addClass("highlighted");
 		})
 	}
 	httpGetAsync("/HadoopAnalyser/Databases", drawDatabasesPie, f2);

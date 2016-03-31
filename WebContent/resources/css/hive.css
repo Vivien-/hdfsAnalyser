@@ -99,6 +99,10 @@ html, body {
 	background: #2C2C2C;
 }
 
+.highlighted {
+	background: #2C2C2C;
+}
+
 .button {
 	background-color: #4CAF50; /* Green */
 	border: none;
