@@ -50,6 +50,8 @@ var color = d3.scale.category10();
 
 	//Function for asynchronous call
 	function httpGetAsync(theUrl, callback1, callback2) {
+		$("#chartTables").empty();
+		$("#waitChartTables").show();
 		var xmlHttp = new XMLHttpRequest();
 		xmlHttp.onreadystatechange = function() { 
 			if (xmlHttp.readyState == 4 && xmlHttp.status == 200){
