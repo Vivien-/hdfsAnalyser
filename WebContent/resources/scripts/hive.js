@@ -90,11 +90,15 @@ var color = d3.scale.category10();
 		if(hasCreatedDB) {
 			targetWaiter = "#waitChartTables";
 			target = "#chartTables";
-			data = json.tbls;
+			data = json.tbls.sort(function(a,b){
+				return parseInt(b.count) - parseInt(a.count);
+			});
 			$(target).empty();
 		} else {
 			hasCreatedDB = true;
-			data = json.dbs;
+			data = json.dbs.sort(function(a,b){
+				return parseInt(b.count) - parseInt(a.count);
+			});
 		}
 				
 		$(targetWaiter).hide();
@@ -154,6 +158,9 @@ var color = d3.scale.category10();
 		}
 		
 		if(firstLoad) {
+			json_g.dbs.sort(function(a, b) {
+			    return parseInt(b.count) - parseInt(a.count);
+			});
 			httpGetAsync("/HadoopAnalyser/Tables?database="+json_g.dbs[0].label, getDBInfoCallBack);
 			firstLoad = false;
 		}
@@ -171,24 +178,44 @@ var color = d3.scale.category10();
 		$("#internals_tbody").empty();
 		$("#externals_thead").empty();
 		$("#internals_thead").empty();
-		$("#externals_thead").append("<tr><th></th><th>Externals for <span style='color:"+color(json.database)+"'>"+json.database+"</span></th><th></th></tr><tr><th><span>Name</span></th><th><span>Location</span></th><th><span>Size</span></th></tr>");
-		$("#internals_thead").append("<tr><th></th><th>Internals for <span style='color:"+color(json.database)+"'>"+json.database+"</span></th><th></th></tr><tr><th><span>Name</span></th><th><span>Location</span></th><th><span>Size</span></th></tr>");
+		$("#externals_thead").append("<tr><th></th><th>Externals for <span style='color:"+color(json.database)+"'>"+json.database+"</span></th><th></th></tr><tr><th><span>Name</span></th><th><span>Location /</span></th><th><span>Size</span></th></tr>");
+		$("#internals_thead").append("<tr><th></th><th>Internals for <span style='color:"+color(json.database)+"'>"+json.database+"</span></th><th></th></tr><tr><th><span>Name</span></th><th><span>Location /</span></th><th><span>Size</span></th></tr>");
+		var externals = [];
+		var internals = [];
 		for(var i = 0; i<json.tbls.length; i++){
 			if(json.tbls[i].type == "EXTERNAL_TABLE"){
-				var col = color(json.tbls[i].label);
-				$("#externals_tbody").append("<tr class='db-info' id='"+json.tbls[i].label+"'><td class='lalign' style='color: " + col + ";'>" + json.tbls[i].label + "</td><td style='color: " + col + ";'>" + json.tbls[i].location + "</td> <td style='color: " + col + ";'> " + formatBytes(json.tbls[i].count,2) + "</td>");
+				externals.push(json.tbls[i]);
+			}
+			else if(json.tbls[i].type == "MANAGED_TABLE"){
+				internals.push(json.tbls[i]);
+			}
+			
+		}
+		externals.sort(function(a, b) {
+		    return parseInt(b.count) - parseInt(a.count);
+		});
+		internals.sort(function(a, b) {
+		    return parseInt(b.count) - parseInt(a.count);
+		});
+		for(var i = 0; i<externals.length; i++){
+			if(externals[i].type == "EXTERNAL_TABLE"){
+				var col = color(externals[i].label);
+				$("#externals_tbody").append("<tr class='db-info' id='"+externals[i].label+"'><td class='lalign' style='color: " + col + ";'>" + externals[i].label + "</td><td style='color: " + col + ";'>" + externals[i].location + "</td> <td style='color: " + col + ";'> " + formatBytes(externals[i].count,2) + "</td>");
 			}
 		}
-		for(var i = 0; i<json.tbls.length; i++){
-			if(json.tbls[i].type == "MANAGED_TABLE"){
-				var col = color(json.tbls[i].label);
-				$("#internals_tbody").append("<tr class='db-info' id='"+json.tbls[i].label+"'><td class='lalign' style='color: " + col + ";'>" + json.tbls[i].label + "</td><td style='color: " + col + ";'>" + json.tbls[i].location + "</td> <td style='color: " + col + ";'> " + formatBytes(json.tbls[i].count,2) + "</td>");
+		for(var i = 0; i<internals.length; i++){
+			if(internals[i].type == "MANAGED_TABLE"){
+				var col = color(internals[i].label);
+				$("#internals_tbody").append("<tr class='db-info' id='"+internals[i].label+"'><td class='lalign' style='color: " + col + ";'>" + internals[i].label + "</td><td style='color: " + col + ";'>" + internals[i].location + "</td> <td style='color: " + col + ";'> " + formatBytes(internals[i].count,2) + "</td>");
 			}
 		}
 	}
 	
 	function f2(json){
 		json = JSON.parse(json);
+		json.dbs.sort(function(a, b) {
+		    return parseInt(b.count) - parseInt(a.count);
+		});
 		for(var i = 0; i<json.dbs.length; i++){
 			var col = color(json.dbs[i].label);
 			$("#databases_tbody").append("<tr class='db-info db-onclick' id='"+json.dbs[i].label+"'><td class='lalign' style='color: " + col + ";'>" + json.dbs[i].label + "</td><td style='color: " + col + ";'>" + json.dbs[i].location + "</td> <td style='color: " + col + ";'> " + formatBytes(json.dbs[i].count,2) + "</td>");
