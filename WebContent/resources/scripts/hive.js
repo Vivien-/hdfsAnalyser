@@ -224,6 +224,7 @@ var color = d3.scale.category10();
 			var col = color(json.dbs[i].label);
 			$("#databases_tbody").append("<tr class='db-info db-onclick' id='"+json.dbs[i].label+"'><td class='lalign' style='color: " + col + ";'>" + json.dbs[i].label + "</td><td style='color: " + col + ";'>" + json.dbs[i].location + "</td> <td style='color: " + col + ";'> " + formatBytes(json.dbs[i].count,2) + "</td>");
 		}
+		$("#"+json.dbs[0].label).addClass("highlighted");
 		$(".db-onclick").click(function(e) {
 			var name = e.currentTarget.id;
 			//No need to send a request
