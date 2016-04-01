@@ -25,7 +25,7 @@ path {
 }
 
 path:hover {
-	opacity: 1.0;
+	opacity: 1.0 !important;
 }
 
 #tooltip {
@@ -43,6 +43,11 @@ path:hover {
 path text {
 	font: 10px sans-serif;
 	text-anchor: middle;
+}
+
+.shadow {
+    -webkit-filter: drop-shadow( -5px -5px 5px #000 );
+            filter: drop-shadow( -5px -5px 5px #000 ); /* Same syntax as box-shadow */
 }
 
 .arc text {
@@ -196,17 +201,4 @@ path text {
   background: rgba(0, 0, 0, 0.8);
   color: #fff;
   border-radius: 2px;
-}
-
-/* Creates a small triangle extender for the tooltip */
-.d3-tip:after, .d3-tip:before {
-	content: "";
-	position: absolute;
-	height: 0;
-	width: 0;
-	left: -20px;
-	top: 5px;
-	border: 10px solid transparent;
-	border-right: 10px solid rgba(0, 0, 0, 0.8);
-	opacity: 0.7;
 }

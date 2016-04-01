@@ -28,30 +28,6 @@ var luminance = d3.scale.sqrt()
 .clamp(true)
 .range([90, 20]);
 
-var tooltip = d3.select("body")
-.append("div")
-.attr("id", "tooltip")
-.style("position", "absolute")
-.style("z-index", "10")
-.style("opacity", 0);
-
-function mouseOverArc(d) {
-	tooltip.html(d.name + "<br>" + formatBytes(d.value, 2));
-	return tooltip.transition()
-	.duration(50)
-	.style("opacity", 0.9);
-}
-
-function mouseMoveArc (d) {
-	return tooltip
-	.style("top", (d3.event.pageY-10)+"px")
-	.style("left", (d3.event.pageX+50)+"px");
-}
-
-function mouseOutArc(){
-	return tooltip.style("opacity", 0);
-}
-
 var tip = d3.tip()
 .attr('class', 'd3-tip')
 .direction("e")
@@ -74,7 +50,11 @@ var svg = d3.select("body").append("svg")
 svg.call(tip);
 
 var partition = d3.layout.partition()
-.sort(function(a, b) { return d3.ascending(a.name, b.name); })
+.sort(function(a, b) { 
+	if(a.sum > b.sum)
+		return -1;
+	return 1;
+})
 .size([2 * Math.PI, radius]);
 
 var arc = d3.svg.arc()
@@ -225,7 +205,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 				return 1;
 			else 
 				return 0;
-		})
+		}).slice();
 
 		$("#infos").empty();
 		if(typeof root.parent != "undefined") {
@@ -248,6 +228,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 		d3.transition().duration(750).each(function() {
 			path.exit().transition()
 			.style("fill-opacity", function(d) { return d.depth === 1 + (root === p) ? 1 : 0; })
+			.attr("id", function(d) {return key(d); })
 			.attrTween("d", function(d) { return arcTween.call(this, exitArc(d)); })
 			.remove();
 
@@ -255,6 +236,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 			.append("path")
 			.style("fill-opacity", function(d) { return d.depth === 2 - (root === p) ? 1 : 0; })
 			.style("fill", function(d) { return d.fill; })
+			.attr("id", function(d) {return key(d); })
 			.on("click", zoomIn)
 			.on('mouseover', tip.show)
 			.on('mouseout', tip.hide)
@@ -266,14 +248,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 			.style("display", function(d) { if(Math.abs(d.x - (d.x + d.dx)) > min_degree_arc_filter *(Math.PI)/180) return "inherit"; return "none"; })
 			.attrTween("d", function(d) { return arcTween.call(this, updateArc(d)); });
 		});
-		var children_sorted = root.children.sort(function(a,b){
-			if(a.value > b.value)
-				return -1;
-			else if (a.value < b.value)
-				return 1;
-			else 
-				return 0;
-		})
+
 		var val = 0;
 		for(var i = 0; i < children_sorted.length; i++){
 			val += root.children[i].sum;
@@ -306,48 +281,44 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 			zoomIn(current_elem);	
 		});
 		
+		function getPathTargetByEvent(event) {
+			var tokens = event.currentTarget.textContent.split(" ");
+			var thatname = '';
+			//stop at tokens.length - 2 because we concatenate the whole name except the size at the end of the line
+			for(var k = 0; k < tokens.length - 2; k++)  {
+				thatname += tokens[k];
+				if(k!=tokens.length - 3 && k != 0)
+					thatname += " ";
+			}
+			var idx = 0;
+			for(var j = 0; j < root.children.length; j++) {
+				if(root.children[j].name === thatname) {
+					idx = j;
+					break;
+				}
+			}
+			return root.children[idx];
+		}
+		
 		for(var i = 0; i < children_sorted.length; i++){
 			var iterator = 2*i;
 			if(typeof root.parent != "undefined")
 				iterator = 2*i + 1;
 			var $thisDiv = $("#infos").children().eq(iterator);
 			$thisDiv.click(function(event){
-				var tokens = event.currentTarget.textContent.split(" ");
-				var thatname = '';
-				//stop at tokens.length - 2 because we concatenate the whole name except the size at the end of the line
-				for(var k = 0; k < tokens.length - 2; k++)  {
-					thatname += tokens[k];
-					if(k!=tokens.length - 3 && k != 0)
-						thatname += " ";
-				}
-				var idx = 0;
-				for(var j = 0; j < root.children.length; j++) {
-					if(root.children[j].name === thatname) {
-						idx = j;
-						break;
-					}
-				}
-				zoomIn(root.children[idx]);
+				var child = getPathTargetByEvent(event);
+				zoomIn(child);
 			});
 			$thisDiv.on("mouseover",function(event){
-				var tokens = event.currentTarget.textContent.split(" ");
-				var thatname = '';
-				//stop at tokens.length - 2 because we concatenate the whole name except the size at the end of the line
-				for(var k = 0; k < tokens.length - 2; k++)  {
-					thatname += tokens[k];
-					if(k!=tokens.length - 3 && k != 0)
-						thatname += " ";
-				}
-				var idx = 0;
-				for(var j = 0; j < root.children.length; j++) {
-					if(root.children[j].name === thatname) {
-						idx = j;
-						break;
-					}
-				}
-				console.log($("#"+key(root.children[idx])));
-				console.log($("#tooltip"));
-				$("#"+key(root.children[idx])).css("opacity", 1);
+				var child = getPathTargetByEvent(event);
+				var tar = document.getElementById(key(child));
+				var col = d3.rgb($(tar).css("fill")).brighter();
+				$(tar).css("opacity", 1).css("fill", col.toString());
+			});
+			$thisDiv.on("mouseout",function(event){
+				var child = getPathTargetByEvent(event);
+				var tar = document.getElementById(key(child));
+				$(tar).css("opacity", 0.9).css("fill", fill(child));
 			});
 		}
 	}
@@ -401,6 +372,3 @@ function updateArc(d) {
 }
 
 d3.select(self.frameElement).style("height", margin.top + margin.bottom + "px");
-$("svg").hover(function(){
-	tooltip.style("opacity", 0);
-});
