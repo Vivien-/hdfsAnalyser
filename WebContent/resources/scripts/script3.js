@@ -146,7 +146,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 		var child = children_sorted_[i];
 		if(typeof child.name === "undefined")
 			nb_undefined++;
-		var col = d3.select(child)[0][0].fill.toString();
+		var col = fill(child).toString();
 		var folder_icon = '';
 		if(typeof child.children != "undefined")
 			folder_icon = '<i class="fa fa-folder"></i>';
@@ -175,6 +175,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 	.enter().append("path")
 	.filter(function(d) { return (Math.abs(d.x - (d.x + d.dx)) > min_degree_arc_filter *(Math.PI)/180); })
 	.attr("d", arc)
+	.attr("id", function(d) {return key(d); })
 	.style("fill", function(d) { return fill(d); })
 	.on('mouseover', tip.show)
 	.on('mouseout', tip.hide)
@@ -210,18 +211,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 			: {depth: 0, x: 0, dx: 2 * Math.PI};
 		}
 
-		$("#path").empty();
-		var current_dir = root;
-		var path_dir = '';
-
-		while(current_dir.parent != null){
-			var col = current_dir.fill.toString();
-			path_dir += '<span class="path_element" style="background-color: ' + col + '">' + current_dir.name+'</span>/$#';
-			current_dir = current_dir.parent;
-		} 
-		path_dir += '<span class="path_element" style="background-color: #cccccc">' + current_dir.name+'</span>/$#';
-		$("#path").html(path_dir.split("/$#").reverse().join(""));
-
+		
 		function outsideArc(d) {
 			return {depth: d.depth + 1, x: outsideAngle(d.x), dx: outsideAngle(d.x + d.dx) - outsideAngle(d.x)};
 		}
@@ -244,20 +234,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 				zoomIn(root.parent);
 			});
 		}
-		var val = 0;
-		for(var i = 0; i < children_sorted.length; i++){
-			val += root.children[i].sum;
-			var child = children_sorted[i];
-			var col = d3.select(child)[0][0].fill.toString();
-			var folder_icon = '';
-			if(typeof child.children != "undefined")
-				folder_icon = '<i class="fa fa-folder"></i>';
-			$("#infos").append("<div class='node'>"+ folder_icon +" <figure class='circle' style='background: " + col + "'></figure><span class='info' style='color: "+ col +"'>" + child.name + "</span><span class='right' style='color: white'> " + formatBytes(child.value,2) + "</span></div><div style='clear:both;'></div>");
-		}
-		$("#center").text(formatBytes(val,2));
-
-		$("#infos").css("top", parseInt($("#path").css("top"), 10) + parseInt($("#path").height(),10) + 5);
-
+		
 		// When zooming in, arcs enter from the outside and exit to the inside.
 		// Entering outside arcs start from the old layout.
 		if (root === p) enterArc = outsideArc, exitArc = insideArc, outsideAngle.range([p.x, p.x + p.dx]);
@@ -289,6 +266,38 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 			.style("display", function(d) { if(Math.abs(d.x - (d.x + d.dx)) > min_degree_arc_filter *(Math.PI)/180) return "inherit"; return "none"; })
 			.attrTween("d", function(d) { return arcTween.call(this, updateArc(d)); });
 		});
+		var children_sorted = root.children.sort(function(a,b){
+			if(a.value > b.value)
+				return -1;
+			else if (a.value < b.value)
+				return 1;
+			else 
+				return 0;
+		})
+		var val = 0;
+		for(var i = 0; i < children_sorted.length; i++){
+			val += root.children[i].sum;
+			var child = children_sorted[i];
+			var col = fill(child).toString();
+			var folder_icon = '';
+			if(typeof child.children != "undefined")
+				folder_icon = '<i class="fa fa-folder"></i>';
+			$("#infos").append("<div class='node'>"+ folder_icon +" <figure class='circle' style='background: " + col + "'></figure><span class='info' style='color: "+ col +"'>" + child.name + "</span><span class='right' style='color: white'> " + formatBytes(child.value,2) + "</span></div><div style='clear:both;'></div>");
+		}
+		$("#center").text(formatBytes(val,2));
+
+		$("#path").empty();
+		var current_dir = root;
+		var path_dir = '';
+
+		while(current_dir.parent != null){
+			var col = d3.select(current_dir)[0][0].fill.toString();
+			path_dir += '<span class="path_element" style="background-color: ' + col + '">' + current_dir.name+'</span>/$#';
+			current_dir = current_dir.parent;
+		} 
+		path_dir += '<span class="path_element" style="background-color: #cccccc">' + current_dir.name+'</span>/$#';
+		$("#path").html(path_dir.split("/$#").reverse().join(""));
+		$("#infos").css("top", parseInt($("#path").css("top"), 10) + parseInt($("#path").height(),10) + 5);
 
 		$(".path_element").click(function(){
 			var current_elem = root;
@@ -296,7 +305,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 				current_elem = current_elem.parent;
 			zoomIn(current_elem);	
 		});
-
+		
 		for(var i = 0; i < children_sorted.length; i++){
 			var iterator = 2*i;
 			if(typeof root.parent != "undefined")
@@ -320,13 +329,33 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 				}
 				zoomIn(root.children[idx]);
 			});
+			$thisDiv.on("mouseover",function(event){
+				var tokens = event.currentTarget.textContent.split(" ");
+				var thatname = '';
+				//stop at tokens.length - 2 because we concatenate the whole name except the size at the end of the line
+				for(var k = 0; k < tokens.length - 2; k++)  {
+					thatname += tokens[k];
+					if(k!=tokens.length - 3 && k != 0)
+						thatname += " ";
+				}
+				var idx = 0;
+				for(var j = 0; j < root.children.length; j++) {
+					if(root.children[j].name === thatname) {
+						idx = j;
+						break;
+					}
+				}
+				console.log($("#"+key(root.children[idx])));
+				console.log($("#tooltip"));
+				$("#"+key(root.children[idx])).css("opacity", 1);
+			});
 		}
 	}
 });
 
 function key(d) {
 	var k = [], p = d;
-	while (p.depth) k.push(p.name), p = p.parent;
+	while (typeof p.parent != 'undefined') k.push(p.name), p = p.parent;
 	return k.reverse().join(".");
 }
 

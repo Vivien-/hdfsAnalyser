@@ -61,6 +61,8 @@ var color = d3.scale.category10();
 					callback2(xmlHttp.responseText);
 				} else
 					callback1(xmlHttp.responseText, {"x": x/2-20, "y": y/2-20});
+			} else if(xmlHttp.status == 503){
+				$("#error").show();
 			}
 
 		}
