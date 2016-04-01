@@ -37,20 +37,10 @@ public class Databases extends HttpServlet {
 		DFSAnalyser dfs = new DFSAnalyser(/*cookies[i].getValue()*/);
 		try {
 			json = dfs.databases();
-		}  catch (MetaException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchObjectException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (TException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		response.getWriter().print(json);
+			response.getWriter().print(json);
+		} catch (IllegalArgumentException | TException e) {
+			response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+		} 
 	}
 
 	/**

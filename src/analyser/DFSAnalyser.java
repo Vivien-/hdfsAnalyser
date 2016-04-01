@@ -157,7 +157,7 @@ public class DFSAnalyser {
 		//Getting Environnement variables locations
 		String hiveCf = System.getenv("HIVE_CONF");
 		String hdfsCf = System.getenv("HADOOP_CONF");
-
+		System.out.println(hiveCf);
 		//Setting paths
 		Path hivep = new Path(hiveCf);
 		Path hdfsp = new Path(hdfsCf);

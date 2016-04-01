@@ -37,23 +37,11 @@ public class HiveContent extends HttpServlet {
 		DFSAnalyser dfs = new DFSAnalyser(/*cookies[i].getValue()*/);
 		try {
 			json = dfs.getHiveContent(/*""*/);
-		}  catch (MetaException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchObjectException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (TException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		response.getWriter().print(json);
+			response.getWriter().print(json);
+		}  catch (IllegalArgumentException | TException | ClassNotFoundException e) {
+			System.out.println("toto");
+			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+		} 
 	}
 
 	/**
