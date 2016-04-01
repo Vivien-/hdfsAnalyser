@@ -147,6 +147,17 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 				}
 			}
 			zoomIn(root.children[idx]);
+		})
+		.on("mouseout",function(event){
+				var child = getPathTargetByEvent(event, root);
+				var tar = document.getElementById(key(child));
+				$(tar).css("opacity", 0.9).css("fill", fill(child));
+		})
+		.on("mouseover",function(event){
+				var child = getPathTargetByEvent(event, root);
+				var tar = document.getElementById(key(child));
+				var col = d3.rgb($(tar).css("fill")).brighter();
+				$(tar).css("opacity", 0.9).css("fill", col.toString());
 		});
 	}
 
@@ -281,42 +292,23 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 			zoomIn(current_elem);	
 		});
 		
-		function getPathTargetByEvent(event) {
-			var tokens = event.currentTarget.textContent.split(" ");
-			var thatname = '';
-			//stop at tokens.length - 2 because we concatenate the whole name except the size at the end of the line
-			for(var k = 0; k < tokens.length - 2; k++)  {
-				thatname += tokens[k];
-				if(k!=tokens.length - 3 && k != 0)
-					thatname += " ";
-			}
-			var idx = 0;
-			for(var j = 0; j < root.children.length; j++) {
-				if(root.children[j].name === thatname) {
-					idx = j;
-					break;
-				}
-			}
-			return root.children[idx];
-		}
-		
 		for(var i = 0; i < children_sorted.length; i++){
 			var iterator = 2*i;
 			if(typeof root.parent != "undefined")
 				iterator = 2*i + 1;
 			var $thisDiv = $("#infos").children().eq(iterator);
 			$thisDiv.click(function(event){
-				var child = getPathTargetByEvent(event);
+				var child = getPathTargetByEvent(event, root);
 				zoomIn(child);
 			});
 			$thisDiv.on("mouseover",function(event){
-				var child = getPathTargetByEvent(event);
+				var child = getPathTargetByEvent(event, root);
 				var tar = document.getElementById(key(child));
 				var col = d3.rgb($(tar).css("fill")).brighter();
 				$(tar).css("opacity", 1).css("fill", col.toString());
 			});
 			$thisDiv.on("mouseout",function(event){
-				var child = getPathTargetByEvent(event);
+				var child = getPathTargetByEvent(event, root);
 				var tar = document.getElementById(key(child));
 				$(tar).css("opacity", 0.9).css("fill", fill(child));
 			});
@@ -357,6 +349,25 @@ function fill(d) {
 	var c = d3.lab("rgb("+colors[index].r+"," +  colors[index].g + "," + colors[index].b + ")");
 	c.l = luminance(300000 / d.depth);
 	return c;
+}
+
+function getPathTargetByEvent(event, root) {
+	var tokens = event.currentTarget.textContent.split(" ");
+	var thatname = '';
+	//stop at tokens.length - 2 because we concatenate the whole name except the size at the end of the line
+	for(var k = 0; k < tokens.length - 2; k++)  {
+		thatname += tokens[k];
+		if(k!=tokens.length - 3 && k != 0)
+			thatname += " ";
+	}
+	var idx = 0;
+	for(var j = 0; j < root.children.length; j++) {
+		if(root.children[j].name === thatname) {
+			idx = j;
+			break;
+		}
+	}
+	return root.children[idx];
 }
 
 function arcTween(b) {
