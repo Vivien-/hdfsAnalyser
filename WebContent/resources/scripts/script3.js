@@ -23,6 +23,47 @@ function formatBytes(bytes,decimals) {
 	return (bytes / Math.pow(k, i)).toPrecision(dm) + ' ' + sizes[i];
 }
 
+
+
+function getSearchParameters() {
+	var prmstr = window.location.search.substr(1);
+	return prmstr != null && prmstr != "" ? transformToAssocArray(prmstr)
+			: {};
+}
+
+function transformToAssocArray(prmstr) {
+	var params = {};
+	var prmarr = prmstr.split("&");
+	for (var i = 0; i < prmarr.length; i++) {
+		var tmparr = prmarr[i].split("=");
+		params[tmparr[0]] = tmparr[1];
+	}
+	return params;
+}
+
+var params = getSearchParameters();
+var rvalue = 6;	
+if (params.minSize)
+	rvalue = params.minSize;
+
+
+$("#refresh")
+//.click(function(){
+//	location.href = "/HadoopAnalyser/Start?minSize=" + $("#range").val();	
+//})
+.append(" (> " + f(rvalue) + ")");
+
+$("#range")
+.val(rvalue)
+.on("change", function(){
+	$("#refresh")
+	.html("Refresh view (> " + f($(this).val()) + ")")
+	.attr("href", "/HadoopAnalyser/Start?minSize=" + $("#range").val())
+	.attr("title", "Only files and directory with a size greater than " + f($(this).val()) + " are going to be included. Those smaller will be stored under the 'other' label"); 
+});
+$("#rangevalue").html(f(rvalue));
+
+
 var luminance = d3.scale.sqrt()
 .domain([0, 1e6])
 .clamp(true)
@@ -62,13 +103,13 @@ var arc = d3.svg.arc()
 .endAngle(function(d) { return d.x + d.dx ; })
 .padAngle(0.05) 
 .padRadius(radius/3)
-.innerRadius(function(d) { return radius* d.depth; })
+.innerRadius(function(d) { return radius * d.depth; })
 .outerRadius(function(d) { return radius * (d.depth + 1) - 1; });
 
 var explore = $('#infos').css("height");
 
 var start = new Date().getTime();
-d3.json("/HadoopAnalyser/FileContent", function(error, root) {
+d3.json("/HadoopAnalyser/FileContent?minSize=" + $("#range").val(), function(error, root) {
 	$("#wait").hide();
 	if(error) {
 		$("#error").show();
@@ -76,7 +117,6 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 		var end = new Date().getTime();
 		$("#time").text("hdfs fetched in " + (end-start)/1000 + "s");		
 	}
-
 	$("#path").html('<span class="path_element" style="background-color: #cccccc">' +root.name+'</span>');
 
 	$("#infos")
@@ -85,7 +125,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 	.css("top", (parseInt($("#path").css("top"), 10) + parseInt($("#path").height(),10) + 15 ) + "px")
 	.css("z-index", 10)
 	.css("width", (x - 2*margin.left) + "px")
-	.css("height", (y/2 - 2*margin.top ) + "px");
+	.css("height", (numberOfLayers*radius - 2*margin.top) + "px");
 	// Compute the initial layout on the entire tree to sum sizes.
 	// Also compute the full name and fill color for each node,
 	// and stash the children so they can be restored as we descend.
@@ -164,7 +204,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 	var path = svg.selectAll("path")
 	.data(partition.nodes(root).slice(1))
 	.enter().append("path")
-	.filter(function(d) { return (Math.abs(d.x - (d.x + d.dx)) > min_degree_arc_filter *(Math.PI)/180); })
+	.filter(function(d) { return (d.dx > min_degree_arc_filter *(Math.PI)/180); })
 	.attr("d", arc)
 	.attr("id", function(d) {return key(d); })
 	.style("fill", function(d) { return fill(d); })
@@ -229,9 +269,9 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 		// When zooming in, arcs enter from the outside and exit to the inside.
 		// Entering outside arcs start from the old layout.
 		if (root === p) enterArc = outsideArc, exitArc = insideArc, outsideAngle.range([p.x, p.x + p.dx]);
-
+		
 		path = path.data(partition.nodes(root).slice(1), function(d) { return d.key; });
-
+		
 		// When zooming out, arcs enter from the inside and exit to the outside.
 		// Exiting outside arcs transition to the new layout.
 		if (root !== p) enterArc = insideArc, exitArc = outsideArc, outsideAngle.range([p.x, p.x + p.dx]);
@@ -242,7 +282,7 @@ d3.json("/HadoopAnalyser/FileContent", function(error, root) {
 			.attr("id", function(d) {return key(d); })
 			.attrTween("d", function(d) { return arcTween.call(this, exitArc(d)); })
 			.remove();
-
+			
 			path.enter()
 			.append("path")
 			.style("fill-opacity", function(d) { return d.depth === 2 - (root === p) ? 1 : 0; })

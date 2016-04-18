@@ -35,7 +35,7 @@ import com.google.gson.JsonObject;
 public class DFSAnalyser {
 
 	private String url;
-
+	
 	public DFSAnalyser(/*String url*/){
 		//this.url = url;
 	}
@@ -79,7 +79,8 @@ public class DFSAnalyser {
 		return json.toString();
 	}
 
-	public String jsonify(TreeMap<String,Map<String, Long>> treemap) {
+	public String jsonify(TreeMap<String,Map<String, Long>> treemap, int msize) {
+		long minSize = (long) Math.pow(10, msize);
 		boolean first = true;
 		JsonObject json = new JsonObject();
 		JsonObject json_f = new JsonObject();
@@ -116,11 +117,22 @@ public class DFSAnalyser {
 			}
 
 			//now adding the files
+			long otherSize = 0;
 			Map<String, Long> files = entry.getValue();
 			for(Map.Entry<String,Long> file : files.entrySet()) {
+				if(file.getValue() < minSize) {
+					otherSize += file.getValue();
+				} else {
+					JsonObject tmp = new JsonObject();
+					tmp.addProperty("name", file.getKey());
+					tmp.addProperty("size", file.getValue());
+					next.get("children").getAsJsonArray().add(tmp);
+				}
+			}
+			if(otherSize > 0) {
 				JsonObject tmp = new JsonObject();
-				tmp.addProperty("name", file.getKey());
-				tmp.addProperty("size", file.getValue());
+				tmp.addProperty("name", "Other-LT"+minSize);
+				tmp.addProperty("size", otherSize);
 				next.get("children").getAsJsonArray().add(tmp);
 			}
 		}

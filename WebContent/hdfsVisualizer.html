@@ -8,7 +8,17 @@
 <link rel="stylesheet" href="resources/css/style.css">
 </head>
 <body>
-	<a class="button" href="/HadoopAnalyser/Start">Refresh view</a>
+	<script type="text/javascript">
+		function f(val, numeric) {
+			var ret =  ( 1 * (Math.pow(10, (val%3))) );
+			if(numeric)
+				return ret;
+			var ext = ['o', 'Ko', 'Mo', 'Go', 'To'];
+			return ret + " " + ext[Math.floor(val/3)];
+
+		}
+	</script>
+	<a class="button" id="refresh" href="#">Refresh view</a>
 	<a class="button" href="/HadoopAnalyser/Hive">Hive view</a>
 	<a class="button" href="/HadoopAnalyser/DiskDetails">See disks details</a>
 	<div id="time"></div>
@@ -23,6 +33,10 @@
 	<div id="path"></div>
 	<div id="wait">
 		<img alt="just wait a sec" src="resources/waiting.gif">
+	</div>
+	<div id="range-wrapper">
+		<input id="range" type="range" min="0" max="12" value="0" onchange="rangevalue.value=f(value)" />
+		<output id="rangevalue"></output>
 	</div>
 	<script src="resources/scripts/d3.tip.v0.6.3.js"></script>
 	<script src="resources/scripts/script3.js" charset="utf-8"></script>

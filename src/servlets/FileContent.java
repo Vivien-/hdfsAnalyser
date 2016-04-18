@@ -34,7 +34,7 @@ public class FileContent extends HttpServlet {
 		String json = "";
 		DFSAnalyser dfs = new DFSAnalyser(/*cookies[i].getValue()*/);
 		try {
-			json = dfs.jsonify(dfs.getHDFSContent(/*""*/));
+			json = dfs.jsonify(dfs.getHDFSContent(), Integer.parseInt(request.getParameter("minSize")));
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 		} catch (URISyntaxException e) {
