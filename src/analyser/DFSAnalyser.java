@@ -33,6 +33,7 @@ import org.apache.thrift.TException;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.protobuf.ServiceException;
 
 
 public class DFSAnalyser {
@@ -309,7 +310,8 @@ public class DFSAnalyser {
 	}
 	
 	//works for hbase +0.98
-	public String getHbaseContent() throws IOException{
+	public String getHbaseContent() throws IOException, ServiceException{
+		
 		//Getting Environnement variables locations
 		String hbaseCf = System.getenv("HBASE_CONF");
 		String hdfsCf = System.getenv("HADOOP_CONF");
@@ -320,6 +322,7 @@ public class DFSAnalyser {
 		Configuration hbaseConf = new HBaseConfiguration();
 		hbaseConf.addResource(hbasep);
 		hbaseConf.addResource(hdfsp);
+		HBaseAdmin.checkHBaseAvailable(hbaseConf);
 		HBaseAdmin admin = new HBaseAdmin(hbaseConf);
 		DistributedFileSystem hdfs = null;
 		FileSystem fs = FileSystem.get(/*new URI(url),*/ hbaseConf);

@@ -33,13 +33,12 @@ public class HiveContent extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		String json = "";
-		DFSAnalyser dfs = new DFSAnalyser(/*cookies[i].getValue()*/);
 		try {
+			String json = "";
+			DFSAnalyser dfs = new DFSAnalyser(/*cookies[i].getValue()*/);
 			json = dfs.getHiveContent(/*""*/);
 			response.getWriter().print(json);
 		}  catch (IllegalArgumentException | TException | ClassNotFoundException e) {
-			System.out.println("toto");
 			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		} 
 	}

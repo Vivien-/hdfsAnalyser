@@ -7,42 +7,27 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.thrift.TException;
-
-import com.google.protobuf.ServiceException;
-
-import analyser.DFSAnalyser;
-
 /**
- * Servlet implementation class HbaseTables
+ * Servlet implementation class Hbase
  */
-@WebServlet("/HbaseTables")
-public class HbaseTables extends HttpServlet {
+@WebServlet("/Hbase")
+public class Hbase extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        
     /**
      * @see HttpServlet#HttpServlet()
      */
-    public HbaseTables() {
+    public Hbase() {
         super();
         // TODO Auto-generated constructor stub
     }
 
 	/**
-	 * @throws IOException 
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
-		try{
-			DFSAnalyser dfs = new DFSAnalyser(/*cookies[i].getValue()*/);
-			String json;
-			json = dfs.getHbaseContent();
-			System.out.println("passed");
-			response.getWriter().print(json);
-		}
-		catch(IOException | ServiceException e){
-			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-		}
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+		request.getRequestDispatcher("hbaseVisualizer.html").forward(request, response);
 	}
 
 	/**

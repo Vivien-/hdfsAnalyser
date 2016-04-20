@@ -61,8 +61,9 @@ var color = d3.scale.category10();
 					callback2(xmlHttp.responseText);
 				} else
 					callback1(xmlHttp.responseText, {"x": x/2-20, "y": y/2-20});
-			} else if(xmlHttp.status == 503){
-				$("#error").show();
+			} else if(xmlHttp.readyState == 4 && xmlHttp.status != 200){
+				alert("Can't get Hive data, possible solution : \n - Set the HIVE_CONF environment variable to the absolute path of your hadoop hive-site.xml in your ~/.bashrc and then source ~/.bashrc");
+
 				return;
 			}
 
