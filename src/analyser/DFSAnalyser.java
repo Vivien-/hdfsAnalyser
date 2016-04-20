@@ -14,6 +14,9 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants.DatanodeReportType;
@@ -303,6 +306,46 @@ public class DFSAnalyser {
 		}
 		return json.toString();
 
+	}
+	
+	//works for hbase +0.98
+	public String getHbaseContent() throws IOException{
+		//Getting Environnement variables locations
+		String hbaseCf = System.getenv("HBASE_CONF");
+		String hdfsCf = System.getenv("HADOOP_CONF");
+		//Setting paths
+		Path hbasep = new Path(hbaseCf);
+		Path hdfsp = new Path(hdfsCf);
+		//Setting HiveConf
+		Configuration hbaseConf = new HBaseConfiguration();
+		hbaseConf.addResource(hbasep);
+		hbaseConf.addResource(hdfsp);
+		HBaseAdmin admin = new HBaseAdmin(hbaseConf);
+		DistributedFileSystem hdfs = null;
+		FileSystem fs = FileSystem.get(/*new URI(url),*/ hbaseConf);
+		hdfs = (DistributedFileSystem) fs;
+		hdfs.setConf(hbaseConf);
+		HTableDescriptor[] tablesDescriptor = admin.listTables();
+		String name;
+		String location;
+		long size;
+		JsonObject json = new JsonObject();
+		json.add("tbls", new JsonArray());
+		for(int i = 0; i< tablesDescriptor.length; i++){
+			JsonObject tmp = new JsonObject();
+			name = tablesDescriptor[i].getNameAsString();
+			if(hbaseConf.get("fs.defaultFS").endsWith("/"))
+				location = hbaseConf.get("fs.defaultFS")+"hbase/data/default/"+name;
+			else 
+				location = hbaseConf.get("fs.defaultFS")+"/hbase/data/default/"+name;
+			size = hdfs.getContentSummary(new Path(location)).getLength();
+			location = location.replace(hbaseConf.get("fs.defaultFS"), "");
+			tmp.addProperty("name", name);
+			tmp.addProperty("location", location);
+			tmp.addProperty("size", size);
+			json.get("tbls").getAsJsonArray().add(tmp);
+		}
+		return json.toString();
 	}
 
 }
