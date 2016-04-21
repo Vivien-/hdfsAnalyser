@@ -57,8 +57,8 @@ public class DFSAnalyser {
 		hdfs.setConf(configuration);
 		DatanodeInfo[] dataNodes = hdfs.getDataNodeStats(DatanodeReportType.ALL);
 		json.add("summary", new JsonArray());
-		global.addProperty("used", hdfs.getContentSummary(new Path("/")).getLength());
-		global.addProperty("unused", hdfs.getStatus().getRemaining() + (hdfs.getStatus().getUsed() - hdfs.getContentSummary(new Path("/")).getLength()));
+		global.addProperty("used", hdfs.getStatus().getUsed());
+		global.addProperty("unused", hdfs.getStatus().getRemaining());
 		json.get("summary").getAsJsonArray().add(global);
 		for(int i = 0; i < dataNodes.length; i++){
 			JsonObject current = new JsonObject();
