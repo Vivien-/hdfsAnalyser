@@ -1,20 +1,23 @@
+"use strict";
+
 var w = window,
 d = document,
 e = d.documentElement,
 g = d.getElementsByTagName('body')[0],
 x = w.innerWidth || e.clientWidth || g.clientWidth,
 y = w.innerHeight|| e.clientHeight|| g.clientHeight;
-//put svg in the left side of the screen
-x=x/2;
-//number of layers including the center
-var numberOfLayers = 7;
-var margin = {top: y/30, right: x/30, bottom: y/30, left: x/30 },
+
+x=x/2;							//put svg in the left side of the screen
+
+var numberOfLayers = 7;			//number of layers including the center
+
+var margin = {top: y/30, right: x/30, bottom: y/30, left: x/30 }, //border margin of the window and radius of the suburst layers
 radius = Math.min(y - 2*margin.top, x - 2*margin.right, y - 2*margin.bottom, x - 2*margin.left)/(2*numberOfLayers);
 
-var min_degree_arc_filter = 2;
-var hue = d3.scale.category10();
+var min_degree_arc_filter = 2;	//filter svg arc element smaller than 2degrees
+var hue = d3.scale.category10();//color set
 
-function formatBytes(bytes,decimals) {
+function formatBytes(bytes,decimals) { //used to format the size of files/folders to become human readable
 	if(bytes == 0) return '0 o';
 	var k = 1000;
 	var dm = decimals + 1 || 3;
@@ -23,15 +26,13 @@ function formatBytes(bytes,decimals) {
 	return (bytes / Math.pow(k, i)).toPrecision(dm) + ' ' + sizes[i];
 }
 
-
-
-function getSearchParameters() {
+function getSearchParameters() {	  	//get the parameters passed through url
 	var prmstr = window.location.search.substr(1);
 	return prmstr != null && prmstr != "" ? transformToAssocArray(prmstr)
 			: {};
 }
 
-function transformToAssocArray(prmstr) {
+function transformToAssocArray(prmstr) { //map the url parameters
 	var params = {};
 	var prmarr = prmstr.split("&");
 	for (var i = 0; i < prmarr.length; i++) {
@@ -42,17 +43,13 @@ function transformToAssocArray(prmstr) {
 }
 
 var params = getSearchParameters();
-var rvalue = 6;	
-if (params.minSize)
+
+var rvalue = 6;			//default search value used to compute the threshold of the size of files displayed
+if (params.minSize)		//is url parameter minSize is set then update the threshold value				
 	rvalue = params.minSize;
 
-
-$("#refresh")
-//.click(function(){
-//	location.href = "/HadoopAnalyser/Start?minSize=" + $("#range").val();	
-//})
-.append(" (> " + f(rvalue) + ")");
-
+//the following lines are just UI update as a function of the rvalue parameter
+$("#refresh").append(" (> " + f(rvalue) + ")"); 
 $("#range")
 .val(rvalue)
 .on("change", function(){
@@ -62,9 +59,9 @@ $("#range")
 	.attr("title", "Only files and directory with a size greater than " + f($(this).val()) + " are going to be included. Those smaller will be stored under the 'other' label"); 
 });
 $("#rangevalue").html(f(rvalue));
+//end of ui update
 
-
-var luminance = d3.scale.sqrt()
+var luminance = d3.scale.sqrt() 
 .domain([0, 1e6])
 .clamp(true)
 .range([90, 20]);
@@ -73,10 +70,10 @@ var tip = d3.tip()
 .attr('class', 'd3-tip')
 .direction("e")
 .offset(function() {
-  return [0, 5]
+	return [0, 5]
 })
 .html(function(d) {
-  return d.name + "<br>" + "<span style='color:orangered'>" + formatBytes(d.value, 2) + "</span>";
+	return d.name + "<br>" + "<span style='color:orangered'>" + formatBytes(d.value, 2) + "</span>";
 });
 
 var svg = d3.select("body").append("svg")
@@ -189,15 +186,15 @@ d3.json("/HadoopAnalyser/FileContent?minSize=" + $("#range").val(), function(err
 			zoomIn(root.children[idx]);
 		})
 		.on("mouseout",function(event){
-				var child = getPathTargetByEvent(event, root);
-				var tar = document.getElementById(key(child));
-				$(tar).css("opacity", 0.9).css("fill", fill(child));
+			var child = getPathTargetByEvent(event, root);
+			var tar = document.getElementById(key(child));
+			$(tar).css("opacity", 0.9).css("fill", fill(child));
 		})
 		.on("mouseover",function(event){
-				var child = getPathTargetByEvent(event, root);
-				var tar = document.getElementById(key(child));
-				var col = d3.rgb($(tar).css("fill")).brighter();
-				$(tar).css("opacity", 0.9).css("fill", col.toString());
+			var child = getPathTargetByEvent(event, root);
+			var tar = document.getElementById(key(child));
+			var col = d3.rgb($(tar).css("fill")).brighter();
+			$(tar).css("opacity", 0.9).css("fill", col.toString());
 		});
 	}
 
@@ -226,7 +223,7 @@ d3.json("/HadoopAnalyser/FileContent?minSize=" + $("#range").val(), function(err
 	}
 
 	var end2 = new Date().getTime();
-	//$("#time").append("<br>visualization in " + ((end2-end)/1000) + "s");
+	$("#time").append(" | visualization in " + ((end2-end)/1000) + "s");
 	// Zoom to the specified new root.
 	function zoom(root, p) {
 		if (document.documentElement.__transition__) return;
@@ -234,7 +231,7 @@ d3.json("/HadoopAnalyser/FileContent?minSize=" + $("#range").val(), function(err
 		var enterArc,
 		exitArc,
 		outsideAngle = d3.scale.linear().domain([0, 2 * Math.PI]);
-		
+
 		function insideArc(d) {
 			return p.key > d.key
 			? {depth: d.depth - 1, x: 0, dx: 0} : p.key < d.key
@@ -242,7 +239,7 @@ d3.json("/HadoopAnalyser/FileContent?minSize=" + $("#range").val(), function(err
 			: {depth: 0, x: 0, dx: 2 * Math.PI};
 		}
 
-		
+
 		function outsideArc(d) {
 			return {depth: d.depth + 1, x: outsideAngle(d.x), dx: outsideAngle(d.x + d.dx) - outsideAngle(d.x)};
 		}
@@ -265,13 +262,13 @@ d3.json("/HadoopAnalyser/FileContent?minSize=" + $("#range").val(), function(err
 				zoomIn(root.parent);
 			});
 		}
-		
+
 		// When zooming in, arcs enter from the outside and exit to the inside.
 		// Entering outside arcs start from the old layout.
 		if (root === p) enterArc = outsideArc, exitArc = insideArc, outsideAngle.range([p.x, p.x + p.dx]);
-		
+
 		path = path.data(partition.nodes(root).slice(1), function(d) { return d.key; });
-		
+
 		// When zooming out, arcs enter from the inside and exit to the outside.
 		// Exiting outside arcs transition to the new layout.
 		if (root !== p) enterArc = insideArc, exitArc = outsideArc, outsideAngle.range([p.x, p.x + p.dx]);
@@ -282,7 +279,7 @@ d3.json("/HadoopAnalyser/FileContent?minSize=" + $("#range").val(), function(err
 			.attr("id", function(d) {return key(d); })
 			.attrTween("d", function(d) { return arcTween.call(this, exitArc(d)); })
 			.remove();
-			
+
 			path.enter()
 			.append("path")
 			.style("fill-opacity", function(d) { return d.depth === 2 - (root === p) ? 1 : 0; })
@@ -320,7 +317,8 @@ d3.json("/HadoopAnalyser/FileContent?minSize=" + $("#range").val(), function(err
 			var col = d3.select(current_dir)[0][0].fill.toString();
 			path_dir += '<span class="path_element" style="background-color: ' + col + '">' + current_dir.name+'</span>/$#';
 			current_dir = current_dir.parent;
-		} 
+		}
+
 		path_dir += '<span class="path_element" style="background-color: #cccccc">' + current_dir.name+'</span>/$#';
 		$("#path").html(path_dir.split("/$#").reverse().join(""));
 		$("#infos").css("top", parseInt($("#path").css("top"), 10) + parseInt($("#path").height(),10) + 5);
@@ -331,7 +329,7 @@ d3.json("/HadoopAnalyser/FileContent?minSize=" + $("#range").val(), function(err
 				current_elem = current_elem.parent;
 			zoomIn(current_elem);	
 		});
-		
+
 		for(var i = 0; i < children_sorted.length; i++){
 			var iterator = 2*i;
 			if(typeof root.parent != "undefined")
@@ -364,16 +362,12 @@ function key(d) {
 
 var colors = [];
 
-function makeColorGradient(frequency1, frequency2, frequency3,
-		phase1, phase2, phase3,
-		center, width, len)
-{
+function makeColorGradient(frequency1, frequency2, frequency3, phase1, phase2, phase3, center, width, len) {
 	if (center == undefined)   center = 128;
 	if (width == undefined)    width = 127;
 	if (len == undefined)      len = 50;
 
-	for (var i = 0; i < len; ++i)
-	{
+	for (var i = 0; i < len; ++i) {
 		var red = Math.sin(frequency1*i + phase1) * width + center;
 		var grn = Math.sin(frequency2*i + phase2) * width + center;
 		var blu = Math.sin(frequency3*i + phase3) * width + center;

@@ -39,11 +39,9 @@ $("#path")
 .css("z-index", 10)
 .css("max-width", (x - 2*margin.left) + "px");
 
-
 $("#switch")
 .css("top",0)
 .css("left",0);
-
 
 $("#time")
 .css("top",y-20)
