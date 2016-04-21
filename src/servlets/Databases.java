@@ -6,9 +6,6 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.apache.hadoop.hive.metastore.api.MetaException;
-import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.thrift.TException;
 
 import analyser.DFSAnalyser;
@@ -34,7 +31,7 @@ public class Databases extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
 		String json = "";
-		DFSAnalyser dfs = new DFSAnalyser(/*cookies[i].getValue()*/);
+		DFSAnalyser dfs = new DFSAnalyser();
 		try {
 			json = dfs.databases();
 			response.getWriter().print(json);

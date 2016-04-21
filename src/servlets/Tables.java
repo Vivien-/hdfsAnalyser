@@ -6,9 +6,6 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.apache.hadoop.hive.metastore.api.MetaException;
-import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.thrift.TException;
 
 import analyser.DFSAnalyser;
@@ -35,7 +32,7 @@ public class Tables extends HttpServlet {
 		// TODO Auto-generated method stub
 		String database = request.getParameter("database");
 		String json = "";
-		DFSAnalyser dfs = new DFSAnalyser(/*cookies[i].getValue()*/);
+		DFSAnalyser dfs = new DFSAnalyser();
 		try {
 			json = dfs.tables(database);
 			response.getWriter().print(json);

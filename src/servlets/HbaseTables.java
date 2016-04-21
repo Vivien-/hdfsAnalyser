@@ -6,11 +6,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.apache.thrift.TException;
-
 import com.google.protobuf.ServiceException;
-
 import analyser.DFSAnalyser;
 
 /**
@@ -34,7 +30,7 @@ public class HbaseTables extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
 		try{
-			DFSAnalyser dfs = new DFSAnalyser(/*cookies[i].getValue()*/);
+			DFSAnalyser dfs = new DFSAnalyser();
 			String json;
 			json = dfs.getHbaseContent();
 			System.out.println("passed");
