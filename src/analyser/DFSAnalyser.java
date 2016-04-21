@@ -1,14 +1,11 @@
 package analyser;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
@@ -21,14 +18,10 @@ import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants.DatanodeReportType;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.Database;
-import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
-import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.thrift.TException;
 
 import com.google.gson.JsonArray;
@@ -38,10 +31,8 @@ import com.google.protobuf.ServiceException;
 
 public class DFSAnalyser {
 
-	private String url;
 	
-	public DFSAnalyser(/*String url*/){
-		//this.url = url;
+	public DFSAnalyser(){
 	}
 
 	private int indexInArray(JsonArray array, String id){
@@ -57,18 +48,17 @@ public class DFSAnalyser {
 		JsonObject json = new JsonObject();
 		JsonObject global = new JsonObject();
 		String cf = System.getenv("HADOOP_CONF");
-		System.out.println(cf);
 		Path p = new Path(cf);
 		Configuration configuration = new Configuration(true);
 		configuration.addResource(p);
 		DistributedFileSystem hdfs = new DistributedFileSystem();
-		FileSystem fs = FileSystem.get(/*new URI(url),*/ configuration);
+		FileSystem fs = DistributedFileSystem.get(configuration);
 		hdfs = (DistributedFileSystem) fs;
 		hdfs.setConf(configuration);
 		DatanodeInfo[] dataNodes = hdfs.getDataNodeStats(DatanodeReportType.ALL);
 		json.add("summary", new JsonArray());
-		global.addProperty("used", hdfs.getStatus().getUsed());
-		global.addProperty("unused", hdfs.getStatus().getRemaining());
+		global.addProperty("used", hdfs.getContentSummary(new Path("/")).getLength());
+		global.addProperty("unused", hdfs.getStatus().getRemaining() + (hdfs.getStatus().getUsed() - hdfs.getContentSummary(new Path("/")).getLength()));
 		json.get("summary").getAsJsonArray().add(global);
 		for(int i = 0; i < dataNodes.length; i++){
 			JsonObject current = new JsonObject();
@@ -144,7 +134,7 @@ public class DFSAnalyser {
 		return json_f.toString();
 	}
 
-	public TreeMap<String,Map<String, Long>> getHDFSContent(/*String directory*/) throws IllegalArgumentException, IOException, URISyntaxException{
+	public TreeMap<String,Map<String, Long>> getHDFSContent() throws IllegalArgumentException, IOException, URISyntaxException{
 		TreeMap<String,Map<String, Long>> structure = new TreeMap<String, Map<String, Long>>();
 		String cf = System.getenv("HADOOP_CONF");
 	
@@ -152,15 +142,20 @@ public class DFSAnalyser {
 		Configuration configuration = new Configuration(true);
 		configuration.addResource(p);
 		FileSystem hdfs;
-		hdfs = FileSystem.get(/*new URI(url),*/ configuration);
-		RemoteIterator<LocatedFileStatus> it = hdfs.listFiles(new Path("/")/*url+directory)*/, true);
+		hdfs = FileSystem.get(configuration);
+		RemoteIterator<LocatedFileStatus> it = hdfs.listFiles(new Path("/"), true);
+		LocatedFileStatus next;
+		String path;
+		String name;
+		Long size;
+		String parentPath;
 		while(it.hasNext())
 		{
-			LocatedFileStatus next = it.next();
-			String path = next.getPath().toString();
-			String name = next.getPath().getName();
-			Long size = next.getLen();
-			String parentPath = path.substring(0, path.lastIndexOf("/"));
+			next = it.next();
+			path = next.getPath().toString();
+			name = next.getPath().getName();
+			size = next.getLen();
+			parentPath = path.substring(0, path.lastIndexOf("/"));
 			parentPath = parentPath.replace(configuration.get("fs.defaultFS"), "");
 			if(structure.get(parentPath) == null)
 				structure.put(parentPath, new HashMap<String,Long>());
@@ -173,7 +168,6 @@ public class DFSAnalyser {
 		//Getting Environnement variables locations
 		String hiveCf = System.getenv("HIVE_CONF");
 		String hdfsCf = System.getenv("HADOOP_CONF");
-		System.out.println(hiveCf);
 		//Setting paths
 		Path hivep = new Path(hiveCf);
 		Path hdfsp = new Path(hdfsCf);
@@ -187,7 +181,7 @@ public class DFSAnalyser {
 		
 		//Setting HDFS conf
 		DistributedFileSystem hdfs = null;
-		FileSystem fs = FileSystem.get(/*new URI(url),*/ hiveConf);
+		FileSystem fs = FileSystem.get(hiveConf);
 		hdfs = (DistributedFileSystem) fs;
 		hdfs.setConf(hiveConf);
 		
@@ -204,14 +198,20 @@ public class DFSAnalyser {
 			int sum = 0;
 			List<String> tables = client.getAllTables(db);
 			JsonArray tablesJson = new JsonArray();
+			Table table;
+			String name;
+			String location;
+			String type;
+			int last;
+			long size;
 			for(String tb:tables){
 				JsonObject tbJson = new JsonObject();
-				Table table = client.getTable(db, tb);
-				String name = tb;
-				String location = table.getSd().getLocation();
-				String type = table.getTableType();
-				int last = table.getLastAccessTime();
-				long size = hdfs.getContentSummary(new Path(location)).getLength();
+				table = client.getTable(db, tb);
+				name = tb;
+				location = table.getSd().getLocation();
+				type = table.getTableType();
+				last = table.getLastAccessTime();
+				size = hdfs.getContentSummary(new Path(location)).getLength();
 				tbJson.addProperty("name", name);
 				tbJson.addProperty("location", location);
 				tbJson.addProperty("type", type);
@@ -243,7 +243,7 @@ public class DFSAnalyser {
 		HiveMetaStoreClient client = new HiveMetaStoreClient(hiveConf);
 		//Setting HDFS conf
 		DistributedFileSystem hdfs = null;
-		FileSystem fs = FileSystem.get(/*new URI(url),*/ hiveConf);
+		FileSystem fs = FileSystem.get(hiveConf);
 		hdfs = (DistributedFileSystem) fs;
 		hdfs.setConf(hiveConf);
 
@@ -258,10 +258,13 @@ public class DFSAnalyser {
 			dbJson.addProperty("location", database.getLocationUri().replace(hiveConf.get("fs.defaultFS"), ""));
 			int sum = 0;
 			List<String> tables = client.getAllTables(db);
+			Table table;
+			String location;
+			long size;
 			for(String tb:tables){
-				Table table = client.getTable(db, tb);
-				String location = table.getSd().getLocation();
-				long size = hdfs.getContentSummary(new Path(location)).getLength();
+				table = client.getTable(db, tb);
+				location = table.getSd().getLocation();
+				size = hdfs.getContentSummary(new Path(location)).getLength();
 				sum += size;
 			}
 			dbJson.addProperty("count", sum);
@@ -285,19 +288,23 @@ public class DFSAnalyser {
 		HiveMetaStoreClient client = new HiveMetaStoreClient(hiveConf);
 		//Setting HDFS conf
 		DistributedFileSystem hdfs = null;
-		FileSystem fs = FileSystem.get(/*new URI(url),*/ hiveConf);
+		FileSystem fs = FileSystem.get(hiveConf);
 		hdfs = (DistributedFileSystem) fs;
 		hdfs.setConf(hiveConf);
 		JsonObject json = new JsonObject();
 		json.addProperty("database", database);
 		json.add("tbls", new JsonArray());
 		List<String> tables = client.getAllTables(database);
+		Table table;
+		String location;
+		String type;
+		long size;
 		for(String tb:tables){
 			JsonObject tmp = new JsonObject();
-			Table table = client.getTable(database, tb);
-			String location = table.getSd().getLocation();
-			String type = table.getTableType();
-			long size = hdfs.getContentSummary(new Path(location)).getLength();
+			table = client.getTable(database, tb);
+			location = table.getSd().getLocation();
+			type = table.getTableType();
+			size = hdfs.getContentSummary(new Path(location)).getLength();
 			location = location.replace(hiveConf.get("fs.defaultFS"), "");
 			tmp.addProperty("label", tb);
 			tmp.addProperty("location", location);
@@ -325,7 +332,7 @@ public class DFSAnalyser {
 		HBaseAdmin.checkHBaseAvailable(hbaseConf);
 		HBaseAdmin admin = new HBaseAdmin(hbaseConf);
 		DistributedFileSystem hdfs = null;
-		FileSystem fs = FileSystem.get(/*new URI(url),*/ hbaseConf);
+		FileSystem fs = FileSystem.get(hbaseConf);
 		hdfs = (DistributedFileSystem) fs;
 		hdfs.setConf(hbaseConf);
 		HTableDescriptor[] tablesDescriptor = admin.listTables();

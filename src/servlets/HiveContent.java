@@ -1,16 +1,11 @@
 package servlets;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
-
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.apache.hadoop.hive.metastore.api.MetaException;
-import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.thrift.TException;
 
 import analyser.DFSAnalyser;
@@ -35,7 +30,7 @@ public class HiveContent extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		try {
 			String json = "";
-			DFSAnalyser dfs = new DFSAnalyser(/*cookies[i].getValue()*/);
+			DFSAnalyser dfs = new DFSAnalyser();
 			json = dfs.getHiveContent(/*""*/);
 			response.getWriter().print(json);
 		}  catch (IllegalArgumentException | TException | ClassNotFoundException e) {
