@@ -48,19 +48,19 @@ var color = d3.scale.category10();
 function errorManager(status) {
 	switch(status){
 	case 1000:
-		error("Status " + status + ". Can't get Hive data, possible solution : <br>- Set the HIVE_CONF environment variable to the absolute path of your hadoop hive-site.xml in your ~/.bashrc and then source ~/.bashrc", "error");
+		error("Status " + status + ". Can't get Hive data, possible solution : <br>- Set the HIVE_CONF environment variable to the absolute path of your hadoop hive-site.xml in your ~/.bashrc and then source ~/.bashrc <br>- Check that the HIVE_CONF is set to a correct path and that the file is properly formated.", "error");
 		break;
 	case 1001:
-		error("Status " + status + ". Can't get Hadoop data, possible solution : <br>- Set the HADOOP_CONF environment variable to the absolute path of your hadoop hive-site.xml in your ~/.bashrc and then source ~/.bashrc", "error");
+		error("Status " + status + ". Can't get Hadoop data, possible solution : <br>- Set the HADOOP_CONF environment variable to the absolute path of your hadoop hive-site.xml in your ~/.bashrc and then source ~/.bashrc <br>- Check that the HADOOP_CONF is set to a correct path and that the file is properly formated.", "error");
 		break;
 	case 1002:
 		error("Status " + status + ". This should not be occuring. Maybe somthing wrong with a table, can't be accessd or smthg ? I don't really know", "warning");
 		break;
 	case 1003:
-		error("Status " + status + ". Can't get hive or hadoop configuration file, check your HADOOP_CONF and HIVE_CONF environment variables to to see if the path their correct", "error");
+		error("Status " + status + ". Can't get hive or hadoop configuration file, check your HADOOP_CONF and HIVE_CONF environment variables to to see if the path their is correct", "error");
 		break;
 	default:
-		error("An expected error occured <br>error code " + status, "error");
+		error("An unknown error occured <br>error status " + status, "error");
 		break;
 	}
 }
@@ -79,7 +79,11 @@ function error(message, level) {
 			   .show();
 
 	$(".message:last").click(function() {$(this).fadeOut('fast'); });
-	$(".message:last").delay(5000).fadeOut('fast');
+	if(level === "error") {
+		$("#waitChartDatabases").hide();
+		$("#waitChartTables").hide();
+		$("table").hide(); 
+	}
 }
 
 (function(d3) {
