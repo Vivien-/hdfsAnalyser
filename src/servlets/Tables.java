@@ -44,11 +44,6 @@ public class Tables extends HttpServlet {
 			response.sendError(1001);
 		} catch (HiveConfException e) {
 			response.sendError(1000);
-		} catch (EmptyDatabaseException e) {
-			response.sendError(1002);
-		} 
-		catch(ConfPathException e){
-			response.sendError(1003);
 		}
 	}
 
