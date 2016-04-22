@@ -244,7 +244,7 @@ public class DFSAnalyser {
 	}
 
 
-	public String databases() throws HadoopConfException, HiveConfException, ConfPathException{
+	public String databases() throws HadoopConfException, HiveConfException{
 		JsonObject json = new JsonObject();
 		try{
 			//Setting HiveConf
