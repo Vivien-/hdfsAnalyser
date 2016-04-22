@@ -294,18 +294,18 @@ public class DFSAnalyser {
 								}
 							}
 							dbJson.addProperty("count", sum);
-							dbJson.addProperty("isOK", 1);
+							dbJson.addProperty("isOk", 1);
 							json.get("dbs").getAsJsonArray().add(dbJson);
 						}
 						catch(MetaException e){
-							dbJson.addProperty("isOK", 1);
+							dbJson.addProperty("isOk", 1);
 							json.get("dbs").getAsJsonArray().add(dbJson);
 						}		
 					}
 					catch( TException e){
 						System.out.println("hive can't find database : "+db);
 						dbJson.addProperty("label", db);
-						dbJson.addProperty("isOK", 0);
+						dbJson.addProperty("isOk", 0);
 						json.get("dbs").getAsJsonArray().add(dbJson);
 					}
 				}
