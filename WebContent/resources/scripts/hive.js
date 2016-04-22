@@ -48,29 +48,38 @@ var color = d3.scale.category10();
 function errorManager(status) {
 	switch(status){
 	case 1000:
-		error("Can't get Hive data, possible solution : <br>- Set the HIVE_CONF environment variable to the absolute path of your hadoop hive-site.xml in your ~/.bashrc and then source ~/.bashrc", "error");
+		error("Status " + status + ". Can't get Hive data, possible solution : <br>- Set the HIVE_CONF environment variable to the absolute path of your hadoop hive-site.xml in your ~/.bashrc and then source ~/.bashrc", "error");
 		break;
 	case 1001:
-		error("Can't get Hadoop data, possible solution : <br>- Set the HADOOP_CONF environment variable to the absolute path of your hadoop hive-site.xml in your ~/.bashrc and then source ~/.bashrc", "error");
+		error("Status " + status + ". Can't get Hadoop data, possible solution : <br>- Set the HADOOP_CONF environment variable to the absolute path of your hadoop hive-site.xml in your ~/.bashrc and then source ~/.bashrc", "error");
 		break;
 	case 1002:
-		error("Can't get Hadoop data, possible solution : <br>- Set the HADOOP_CONF environment variable to the absolute path of your hadoop hive-site.xml in your ~/.bashrc and then source ~/.bashrc", "warning");
+		error("Status " + status + ". This should not be occuring. Maybe somthing wrong with a table, can't be accessd or smthg ? I don't really know", "warning");
+		break;
+	case 1003:
+		error("Status " + status + ". Can't get hive or hadoop configuration file, check your HADOOP_CONF and HIVE_CONF environment variables to to see if the path their correct", "error");
 		break;
 	default:
-		error("An expected error occured <br>error code " + xmlHttp.status, "error");
-	break;
+		error("An expected error occured <br>error code " + status, "error");
+		break;
 	}
 }
 
-function errorManagerJSON(json) {
-	
+function errorManagerJSON(array_item) {
+	for(var i = 0, len = array_item.length; i < len; i++) {
+		if(! parseInt(array_item[i].isOk)) {
+			error("Can not find " + array_item[i].label, "warning");
+		}
+			
+	}
 }
 
 function error(message, level) {
-	$("#error").html("ERROR: " + message)
-			   .addClass(level)
-			   .show()
-			   .click(function() {$(this).fadeOut(500); });
+	$("#error").append("<div class='message "+ level +"'>"+ level.toUpperCase() +": " + message +"</div>")
+			   .show();
+
+	$(".message:last").click(function() {$(this).fadeOut('fast'); });
+	$(".message:last").delay(5000).fadeOut('fast');
 }
 
 (function(d3) {
@@ -89,7 +98,7 @@ function error(message, level) {
 					callback2(xmlHttp.responseText);
 				} else
 					callback1(xmlHttp.responseText, {"x": x/2-20, "y": y/2-20});
-			} else {
+			} else if(xmlHttp.readyState == 4 && xmlHttp.status != 200){
 				errorManager(xmlHttp.status);
 			}
 		}
@@ -131,7 +140,7 @@ function error(message, level) {
 				return parseInt(b.count) - parseInt(a.count);
 			});
 		}
-				
+		errorManagerJSON(data);
 		$(targetWaiter).hide();
 		$(target)
 		.css("width", width)

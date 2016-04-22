@@ -231,6 +231,11 @@ h1 {
 	background-color: #FFBABA;
 }
 
+.warning {
+	color: #9F6000;
+    background-color: #FEEFB3;
+}
+
 path{
 	cursor:pointer;
 }
