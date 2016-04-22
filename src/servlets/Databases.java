@@ -39,9 +39,11 @@ public class Databases extends HttpServlet {
 			json = dfs.databases();
 			response.getWriter().print(json);
 		} catch (HiveConfException e) {
+			System.out.println("hive servlet");
 			response.sendError(1000);
 		} catch (HadoopConfException e) {
-			response.sendError(10001);
+			System.out.println("hadoop servlet");
+			response.sendError(1001);
 		} 
 	}
 

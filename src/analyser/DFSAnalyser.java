@@ -315,7 +315,10 @@ public class DFSAnalyser {
 
 		}
 		catch(Exception e){
-			throw new HiveConfException();
+			if(e instanceof HadoopConfException)
+				throw new HadoopConfException();
+			else
+				throw new HiveConfException();
 		}
 		return json.toString();
 	}
@@ -377,7 +380,10 @@ public class DFSAnalyser {
 		
 		}
 		catch(Exception e){
-			throw new HiveConfException();
+			if(e instanceof HadoopConfException)
+				throw new HadoopConfException();
+			else
+				throw new HiveConfException();
 		}		
 		return json.toString();
 	}
