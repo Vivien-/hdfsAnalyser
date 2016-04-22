@@ -29,6 +29,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ServiceException;
 
+import Exceptions.ConfPathException;
 import Exceptions.EmptyDatabaseException;
 import Exceptions.HadoopConfException;
 import Exceptions.HiveConfException;
@@ -243,20 +244,20 @@ public class DFSAnalyser {
 	}
 
 
-	public String databases() throws HadoopConfException, HiveConfException{
+	public String databases() throws HadoopConfException, HiveConfException, ConfPathException{
 		JsonObject json = new JsonObject();
-		//Getting Environnement variables locations
-		String hiveCf = System.getenv("HIVE_CONF");
-		String hdfsCf = System.getenv("HADOOP_CONF");
-		//Setting paths
-		Path hivep = new Path(hiveCf);
-		Path hdfsp = new Path(hdfsCf);
-		//Setting HiveConf
-		HiveConf hiveConf = null;
-		hiveConf =  new HiveConf();
-		hiveConf.addResource(hivep);
-		hiveConf.addResource(hdfsp);
 		try{
+			//Getting Environnement variables locations
+			String hiveCf = System.getenv("HIVE_CONF");
+			String hdfsCf = System.getenv("HADOOP_CONF");
+			//Setting paths
+			Path hivep = new Path(hiveCf);
+			Path hdfsp = new Path(hdfsCf);
+			//Setting HiveConf
+			HiveConf hiveConf = null;
+			hiveConf =  new HiveConf();
+			hiveConf.addResource(hivep);
+			hiveConf.addResource(hdfsp);
 			HiveMetaStoreClient client = new HiveMetaStoreClient(hiveConf);
 			DistributedFileSystem hdfs = null;
 			try{
@@ -317,23 +318,26 @@ public class DFSAnalyser {
 		catch(MetaException e){
 			throw new HiveConfException();
 		}
+		catch(IllegalArgumentException e){
+			throw new ConfPathException();
+		}
 		return json.toString();
 	}
 
-	public String tables(String database) throws HadoopConfException, HiveConfException, EmptyDatabaseException{
+	public String tables(String database) throws HadoopConfException, HiveConfException, EmptyDatabaseException, ConfPathException{
 		JsonObject json = new JsonObject();
-		//Getting Environnement variables locations
-		String hiveCf = System.getenv("HIVE_CONF");
-		String hdfsCf = System.getenv("HADOOP_CONF");
-		//Setting paths
-		Path hivep = new Path(hiveCf);
-		Path hdfsp = new Path(hdfsCf);
-		//Setting HiveConf
-		HiveConf hiveConf = null;
-		hiveConf =  new HiveConf();
-		hiveConf.addResource(hivep);
-		hiveConf.addResource(hdfsp);
 		try{
+			//Getting Environnement variables locations
+			String hiveCf = System.getenv("HIVE_CONF");
+			String hdfsCf = System.getenv("HADOOP_CONF");
+			//Setting paths
+			Path hivep = new Path(hiveCf);
+			Path hdfsp = new Path(hdfsCf);
+			//Setting HiveConf
+			HiveConf hiveConf = null;
+			hiveConf =  new HiveConf();
+			hiveConf.addResource(hivep);
+			hiveConf.addResource(hdfsp);
 			HiveMetaStoreClient client = new HiveMetaStoreClient(hiveConf);
 			//Setting HDFS conf
 			DistributedFileSystem hdfs = null;
@@ -379,7 +383,7 @@ public class DFSAnalyser {
 					}
 				}
 				catch(MetaException e){
-					throw new EmptyDatabaseException();
+					System.out.println("database : "+database+" is empty");
 				}
 				
 			}
@@ -389,6 +393,9 @@ public class DFSAnalyser {
 		}
 		catch(MetaException e){
 			throw new HiveConfException();
+		}
+		catch(IllegalArgumentException e){
+			throw new ConfPathException();
 		}
 		
 		return json.toString();

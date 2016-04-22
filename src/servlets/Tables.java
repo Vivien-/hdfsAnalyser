@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.thrift.TException;
 
+import Exceptions.ConfPathException;
 import Exceptions.EmptyDatabaseException;
 import Exceptions.HadoopConfException;
 import Exceptions.HiveConfException;
@@ -46,6 +47,9 @@ public class Tables extends HttpServlet {
 		} catch (EmptyDatabaseException e) {
 			response.sendError(1002);
 		} 
+		catch(ConfPathException e){
+			response.sendError(1003);
+		}
 	}
 
 	/**
