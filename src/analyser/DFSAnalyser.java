@@ -294,14 +294,19 @@ public class DFSAnalyser {
 								}
 							}
 							dbJson.addProperty("count", sum);
+							dbJson.addProperty("isOK", 1);
 							json.get("dbs").getAsJsonArray().add(dbJson);
 						}
 						catch(MetaException e){
-							System.out.println("database "+db+" is empty");
+							dbJson.addProperty("isOK", 1);
+							json.get("dbs").getAsJsonArray().add(dbJson);
 						}		
 					}
 					catch( TException e){
-						System.out.println("hive can't find database : "+db+" or database "+db+"doesn't have any tablle");
+						System.out.println("hive can't find database : "+db);
+						dbJson.addProperty("label", db);
+						dbJson.addProperty("isOK", 0);
+						json.get("dbs").getAsJsonArray().add(dbJson);
 					}
 				}
 			}
@@ -345,8 +350,8 @@ public class DFSAnalyser {
 					String type;
 					long size;
 					for(String tb:tables){
+						JsonObject tmp = new JsonObject();
 						try{
-							JsonObject tmp = new JsonObject();
 							table = client.getTable(database, tb);
 							location = table.getSd().getLocation();
 							type = table.getTableType();
@@ -356,13 +361,20 @@ public class DFSAnalyser {
 							tmp.addProperty("location", location);
 							tmp.addProperty("type", type);
 							tmp.addProperty("count", size);
+							tmp.addProperty("isOk", 1);
 							json.get("tbls").getAsJsonArray().add(tmp);
 						}
 						catch(TException e){
 							System.out.println("hive can't find table"+tb);
+							tmp.addProperty("label", tb);
+							tmp.addProperty("isOk", 0);
+							json.get("tbls").getAsJsonArray().add(tmp);
 						}
 						catch(IOException e){
 							System.out.println("hdfs can't find table "+tb+" in file system");
+							tmp.addProperty("label", tb);
+							tmp.addProperty("isOk", 0);
+							json.get("tbls").getAsJsonArray().add(tmp);
 						}
 					}
 				}
