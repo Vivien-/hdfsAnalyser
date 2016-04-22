@@ -8,6 +8,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.thrift.TException;
 
+import Exceptions.EmptyDatabaseException;
+import Exceptions.HadoopConfException;
+import Exceptions.HiveConfException;
 import analyser.DFSAnalyser;
 
 /**
@@ -36,8 +39,12 @@ public class Tables extends HttpServlet {
 		try {
 			json = dfs.tables(database);
 			response.getWriter().print(json);
-		}  catch (IllegalArgumentException | TException e) {
-			response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+		}  catch (HadoopConfException e) {
+			response.sendError(1001);
+		} catch (HiveConfException e) {
+			response.sendError(1000);
+		} catch (EmptyDatabaseException e) {
+			response.sendError(1002);
 		} 
 	}
 

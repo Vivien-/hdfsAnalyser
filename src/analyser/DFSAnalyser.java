@@ -20,6 +20,7 @@ import org.apache.hadoop.hdfs.protocol.HdfsConstants.DatanodeReportType;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
@@ -27,6 +28,10 @@ import org.apache.thrift.TException;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ServiceException;
+
+import Exceptions.EmptyDatabaseException;
+import Exceptions.HadoopConfException;
+import Exceptions.HiveConfException;
 
 
 public class DFSAnalyser {
@@ -191,44 +196,55 @@ public class DFSAnalyser {
 		json.add("dbs", new JsonArray());
 		JsonObject dbJson = null;
 		for(String db:dbs){
-			dbJson = new JsonObject();
-			dbJson.addProperty("name", db);
-			String loc = client.getDatabase(db).getLocationUri();
-			dbJson.addProperty("location", loc);
-			int sum = 0;
-			List<String> tables = client.getAllTables(db);
-			JsonArray tablesJson = new JsonArray();
-			Table table;
-			String name;
-			String location;
-			String type;
-			int last;
-			long size;
-			for(String tb:tables){
-				JsonObject tbJson = new JsonObject();
-				table = client.getTable(db, tb);
-				name = tb;
-				location = table.getSd().getLocation();
-				type = table.getTableType();
-				last = table.getLastAccessTime();
-				size = hdfs.getContentSummary(new Path(location)).getLength();
-				tbJson.addProperty("name", name);
-				tbJson.addProperty("location", location);
-				tbJson.addProperty("type", type);
-				tbJson.addProperty("last", last);
-				tbJson.addProperty("size", size);
-				tablesJson.add(tbJson);
-				sum += size;
+			try{
+				dbJson = new JsonObject();
+				dbJson.addProperty("name", db);
+				String loc = client.getDatabase(db).getLocationUri();
+				dbJson.addProperty("location", loc);
+				int sum = 0;
+				List<String> tables = client.getAllTables(db);
+				JsonArray tablesJson = new JsonArray();
+				Table table;
+				String name;
+				String location;
+				String type;
+				int last;
+				long size;
+				for(String tb:tables){
+					try{
+						JsonObject tbJson = new JsonObject();
+						table = client.getTable(db, tb);
+						name = tb;
+						location = table.getSd().getLocation();
+						type = table.getTableType();
+						last = table.getLastAccessTime();
+						size = hdfs.getContentSummary(new Path(location)).getLength();
+						tbJson.addProperty("name", name);
+						tbJson.addProperty("location", location);
+						tbJson.addProperty("type", type);
+						tbJson.addProperty("last", last);
+						tbJson.addProperty("size", size);
+						tablesJson.add(tbJson);
+						sum += size;
+					}
+					catch( TException | IOException e){
+						e.printStackTrace();
+					}
+				}
+				dbJson.addProperty("size", sum);
+				dbJson.add("tables", tablesJson);
 			}
-			dbJson.addProperty("size", sum);
-			dbJson.add("tables", tablesJson);
+			catch(TException e){
+				e.printStackTrace();
+			}
 		}
 		json.get("dbs").getAsJsonArray().add(dbJson);
 		return json.toString();
 	}
-	
-	
-	public String databases() throws NoSuchObjectException, TException, IOException{
+
+
+	public String databases() throws HadoopConfException, HiveConfException{
+		JsonObject json = new JsonObject();
 		//Getting Environnement variables locations
 		String hiveCf = System.getenv("HIVE_CONF");
 		String hdfsCf = System.getenv("HADOOP_CONF");
@@ -240,40 +256,67 @@ public class DFSAnalyser {
 		hiveConf =  new HiveConf();
 		hiveConf.addResource(hivep);
 		hiveConf.addResource(hdfsp);
-		HiveMetaStoreClient client = new HiveMetaStoreClient(hiveConf);
-		//Setting HDFS conf
-		DistributedFileSystem hdfs = null;
-		FileSystem fs = FileSystem.get(hiveConf);
-		hdfs = (DistributedFileSystem) fs;
-		hdfs.setConf(hiveConf);
+		try{
+			HiveMetaStoreClient client = new HiveMetaStoreClient(hiveConf);
+			DistributedFileSystem hdfs = null;
+			try{
+				FileSystem fs = FileSystem.get(hiveConf);
+				hdfs = (DistributedFileSystem) fs;
+				hdfs.setConf(hiveConf);
 
-		List<String> dbs = client.getAllDatabases();
-		JsonObject json = new JsonObject();
-		json.add("dbs", new JsonArray());
-		JsonObject dbJson = null;
-		for(String db:dbs){
-			Database database = client.getDatabase(db);
-			dbJson = new JsonObject();
-			dbJson.addProperty("label", db);
-			dbJson.addProperty("location", database.getLocationUri().replace(hiveConf.get("fs.defaultFS"), ""));
-			int sum = 0;
-			List<String> tables = client.getAllTables(db);
-			Table table;
-			String location;
-			long size;
-			for(String tb:tables){
-				table = client.getTable(db, tb);
-				location = table.getSd().getLocation();
-				size = hdfs.getContentSummary(new Path(location)).getLength();
-				sum += size;
+				List<String> dbs = client.getAllDatabases();
+				json.add("dbs", new JsonArray());
+				JsonObject dbJson = null;
+				for(String db:dbs){
+					try{
+						Database database = client.getDatabase(db);
+						dbJson = new JsonObject();
+						dbJson.addProperty("label", db);
+						dbJson.addProperty("location", database.getLocationUri().replace(hiveConf.get("fs.defaultFS"), ""));
+						int sum = 0;
+						try{
+							List<String> tables = client.getAllTables(db);
+							Table table;
+							String location;
+							long size;
+							for(String tb:tables){ 
+								try{
+									table = client.getTable(db, tb);
+									location = table.getSd().getLocation();
+									size = hdfs.getContentSummary(new Path(location)).getLength();
+									sum += size;
+								}
+								catch(TException e){
+									System.out.println("hive can't find table : "+tb);
+								}
+								catch(IOException e){
+									System.out.println("hdfs can't find table "+tb+"in file system");
+								}
+							}
+							dbJson.addProperty("count", sum);
+							json.get("dbs").getAsJsonArray().add(dbJson);
+						}
+						catch(MetaException e){
+							System.out.println("database "+db+" is empty");
+						}		
+					}
+					catch( TException e){
+						System.out.println("hive can't find database : "+db+" or database "+db+"doesn't have any tablle");
+					}
+				}
 			}
-			dbJson.addProperty("count", sum);
-			json.get("dbs").getAsJsonArray().add(dbJson);
+			catch(IOException e){
+				throw new HadoopConfException();
+			}
+		}
+		catch(MetaException e){
+			throw new HiveConfException();
 		}
 		return json.toString();
 	}
-	
-	public String tables(String database) throws IOException, NoSuchObjectException, TException{
+
+	public String tables(String database) throws HadoopConfException, HiveConfException, EmptyDatabaseException{
+		JsonObject json = new JsonObject();
 		//Getting Environnement variables locations
 		String hiveCf = System.getenv("HIVE_CONF");
 		String hdfsCf = System.getenv("HADOOP_CONF");
@@ -285,33 +328,57 @@ public class DFSAnalyser {
 		hiveConf =  new HiveConf();
 		hiveConf.addResource(hivep);
 		hiveConf.addResource(hdfsp);
-		HiveMetaStoreClient client = new HiveMetaStoreClient(hiveConf);
-		//Setting HDFS conf
-		DistributedFileSystem hdfs = null;
-		FileSystem fs = FileSystem.get(hiveConf);
-		hdfs = (DistributedFileSystem) fs;
-		hdfs.setConf(hiveConf);
-		JsonObject json = new JsonObject();
-		json.addProperty("database", database);
-		json.add("tbls", new JsonArray());
-		List<String> tables = client.getAllTables(database);
-		Table table;
-		String location;
-		String type;
-		long size;
-		for(String tb:tables){
-			JsonObject tmp = new JsonObject();
-			table = client.getTable(database, tb);
-			location = table.getSd().getLocation();
-			type = table.getTableType();
-			size = hdfs.getContentSummary(new Path(location)).getLength();
-			location = location.replace(hiveConf.get("fs.defaultFS"), "");
-			tmp.addProperty("label", tb);
-			tmp.addProperty("location", location);
-			tmp.addProperty("type", type);
-			tmp.addProperty("count", size);
-			json.get("tbls").getAsJsonArray().add(tmp);
+		try{
+			HiveMetaStoreClient client = new HiveMetaStoreClient(hiveConf);
+			//Setting HDFS conf
+			DistributedFileSystem hdfs = null;
+			try{
+				FileSystem fs = FileSystem.get(hiveConf);
+				hdfs = (DistributedFileSystem) fs;
+				hdfs.setConf(hiveConf);
+				json.addProperty("database", database);
+				json.add("tbls", new JsonArray());
+				try{
+					List<String> tables = client.getAllTables(database);
+					Table table;
+					String location;
+					String type;
+					long size;
+					for(String tb:tables){
+						try{
+							JsonObject tmp = new JsonObject();
+							table = client.getTable(database, tb);
+							location = table.getSd().getLocation();
+							type = table.getTableType();
+							size = hdfs.getContentSummary(new Path(location)).getLength();
+							location = location.replace(hiveConf.get("fs.defaultFS"), "");
+							tmp.addProperty("label", tb);
+							tmp.addProperty("location", location);
+							tmp.addProperty("type", type);
+							tmp.addProperty("count", size);
+							json.get("tbls").getAsJsonArray().add(tmp);
+						}
+						catch(TException e){
+							System.out.println("hive can't find table"+tb);
+						}
+						catch(IOException e){
+							System.out.println("hdfs can't find table "+tb+" in file system");
+						}
+					}
+				}
+				catch(MetaException e){
+					throw new EmptyDatabaseException();
+				}
+				
+			}
+			catch(IOException e){
+				throw new HadoopConfException();
+			}
 		}
+		catch(MetaException e){
+			throw new HiveConfException();
+		}
+		
 		return json.toString();
 
 	}
