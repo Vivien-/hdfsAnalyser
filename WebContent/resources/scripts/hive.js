@@ -45,6 +45,30 @@ $("#internals")
 
 var color = d3.scale.category10();
 
+function errorManager(status) {
+	switch(status){
+	case 1000:
+		error("Can't get Hive data, possible solution : <br>- Set the HIVE_CONF environment variable to the absolute path of your hadoop hive-site.xml in your ~/.bashrc and then source ~/.bashrc", "error");
+		break;
+	case 1001:
+		error("Can't get Hadoop data, possible solution : <br>- Set the HADOOP_CONF environment variable to the absolute path of your hadoop hive-site.xml in your ~/.bashrc and then source ~/.bashrc", "error");
+		break;
+	case 1002:
+		error("Can't get Hadoop data, possible solution : <br>- Set the HADOOP_CONF environment variable to the absolute path of your hadoop hive-site.xml in your ~/.bashrc and then source ~/.bashrc", "warning");
+		break;
+	default:
+		error("An expected error occured <br>error code " + xmlHttp.status, "error");
+	break;
+	}
+}
+
+function error(message, level) {
+	$("#error").html("ERROR: " + message)
+			   .addClass(level)
+			   .show()
+			   .click(function() {$(this).fadeOut(500); });
+}
+
 (function(d3) {
 	'use strict';
 
@@ -61,12 +85,9 @@ var color = d3.scale.category10();
 					callback2(xmlHttp.responseText);
 				} else
 					callback1(xmlHttp.responseText, {"x": x/2-20, "y": y/2-20});
-			} else if(xmlHttp.readyState == 4 && xmlHttp.status != 200){
-				alert("Can't get Hive data, possible solution : \n - Set the HIVE_CONF environment variable to the absolute path of your hadoop hive-site.xml in your ~/.bashrc and then source ~/.bashrc");
-
-				return;
+			} else {
+				errorManager(xmlHttp.status);
 			}
-
 		}
 		xmlHttp.open("GET", theUrl, true); // true for asynchronous which we want
 		xmlHttp.send(null);

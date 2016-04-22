@@ -6,7 +6,6 @@
 <script src="resources/scripts/jquery-1.12.1.min.js" charset="utf-8"></script>
 <script src="resources/scripts/d3.min.js" charset="utf-8"></script>
 <script src="resources/scripts/d3.tip.v0.6.3.js" charset="utf-8"></script>
-
 <link rel="stylesheet" href="resources/css/hive.css">
 </head>
 <body>
@@ -55,8 +54,7 @@
 </div>
 <div id="waitChartDatabases"><img alt="just wait a sec" src="resources/waiting.gif"></div>
 <div id="waitChartTables"><img alt="just wait a sec" src="resources/waiting.gif"></div>
-<div id="error" style="display:none; color:red; position: absolute; top:40%;">You need to set the HADOOP_CONF environment variable to the absolute path of your hadoop core-site.xml in your ~/.bashrc and source ~/.bashrc.
-<br>Example: export HADOOP_CONF=/opt/hadoop-2.6.4/etc/hadoop/core-site.xml >> ~/.bashrc</div>
+<div id="error" style="display:none; position: absolute; top:0px; left: 100px;"></div>
 <script src="resources/scripts/hive.js"></script>
 </body>
 </html>
