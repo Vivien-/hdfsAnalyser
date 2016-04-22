@@ -62,6 +62,10 @@ function errorManager(status) {
 	}
 }
 
+function errorManagerJSON(json) {
+	
+}
+
 function error(message, level) {
 	$("#error").html("ERROR: " + message)
 			   .addClass(level)
@@ -184,9 +188,7 @@ function error(message, level) {
 				$(".highlighted").removeClass("highlighted");
 				$("#"+name).addClass("highlighted");
 			}));
-		}
-		
-		if(firstLoad) {
+			
 			json_g.dbs.sort(function(a, b) {
 			    return parseInt(b.count) - parseInt(a.count);
 			});

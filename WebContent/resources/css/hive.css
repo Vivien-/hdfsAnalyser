@@ -217,15 +217,18 @@ h1 {
   text-align: left;
 }
 
-#error {
-	color: #D8000C;
-	background-color: #FFBABA;
+.message {
 	border: 1px solid;
 	margin: 10px 10px;
 	padding: 10px 15px 10px 15px;
 	border-radius:10px;
 	cursor: pointer; 
 	z-index: 9999999999999999;
+}
+
+.error {
+	color: #D8000C;
+	background-color: #FFBABA;
 }
 
 path{
