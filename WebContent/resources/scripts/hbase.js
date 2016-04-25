@@ -34,6 +34,41 @@ $("#chartTables")
 .css("width", 2*radius+ "px")
 .css("height", 2*radius + "px");
 
+function errorManager(status) {
+	switch(status){
+	case 1001:
+		error("Status " + status + ". Can't get Hadoop data, possible issues : <br>- The HADOOP_CONF environment to core-site.xml is not correct or not set <br>- The file core-site.xml is not properly formated <br>- Hadoop is not running", "error");
+		break;
+	case 1002:
+		error("Status " + status + ". There is an issue with Hbase : <br>- The HBASE_CONF environment to hbase-site.xml is not correct or not set <br>- The file hbase-site.xml is not properly formated <br>- Hbase is not running", "error");
+		break;
+	default:
+		error("An unknown error occured <br>error status " + status, "error");
+		break;
+	}
+}
+
+function errorManagerJSON(array_item) {
+	for(var i = 0, len = array_item.length; i < len; i++) {
+		if(! parseInt(array_item[i].isOk)) {
+			error("Can not find " + array_item[i].label, "warning");
+		}
+	}
+}
+
+function error(message, level) {
+	$("#error").append("<div class='message "+ level +"'>"+ level.toUpperCase() +": " + message +"</div>")
+			   .show();
+
+	$(".message:last").click(function() {$(this).fadeOut('fast'); });
+	if(level === "error") {
+		$("#waitChartDatabases").hide();
+		$("#waitChartTables").hide();
+		$("table").hide(); 
+	}
+}
+
+
 (function(d3) {
 	'use strict';
 
@@ -64,10 +99,8 @@ $("#chartTables")
 				$("#waitChartTables").hide();
 				callback1(xmlHttp.responseText);
 				callback2(xmlHttp.responseText);
-			} else if(xmlHttp.readyState == 4 && xmlHttp.status != 200){
-				$("#waitChartTables").hide();
-				alert("Status "+xmlHttp.status+" : Can't get Hbase data, possible solution : \n - Check that Hbase is Running \n - Set the HBASE_CONF environment variable to the absolute path of your hadoop hbase-site.xml in your ~/.bashrc and then source ~/.bashrc");
-				return;
+			} else if(xmlHttp.readyState == 4 && xmlHttp.status != 200) {
+				errorManager(xmlHttp.status);
 			}
 		}
 		xmlHttp.open("GET", theUrl, true); // true for asynchronous which we want
@@ -79,6 +112,7 @@ $("#chartTables")
 	function drawPie(data){
 		var json = JSON.parse(data);
 		var dataset = json.tbls;
+		errorManagerJSON(dataset);
 		var svg = d3.select('#chartTables')
 		.append('svg')
 		.attr('width', 2*radius)

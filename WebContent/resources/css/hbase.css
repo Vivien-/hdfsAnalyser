@@ -184,6 +184,25 @@ path{
 }
 
 
+.message {
+	border: 1px solid;
+	margin: 10px 10px;
+	padding: 10px 15px 10px 15px;
+	border-radius:10px;
+	cursor: pointer; 
+	z-index: 9999999999999999;
+}
+
+.error {
+	color: #D8000C;
+	background-color: #FFBABA;
+}
+
+.warning {
+	color: #9F6000;
+    background-color: #FEEFB3;
+}
+
 #vBorder{
 	position: absolute;	
 	background: red; /* For browsers that do not support gradients */
