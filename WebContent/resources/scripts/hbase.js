@@ -66,7 +66,7 @@ $("#chartTables")
 				callback2(xmlHttp.responseText);
 			} else if(xmlHttp.readyState == 4 && xmlHttp.status != 200){
 				$("#waitChartTables").hide();
-				alert("Can't get Hbase data, possible solution : \n - Check that Hbase is Running \n - Set the HBASE_CONF environment variable to the absolute path of your hadoop hbase-site.xml in your ~/.bashrc and then source ~/.bashrc");
+				alert("Status "+xmlHttp.status+" : Can't get Hbase data, possible solution : \n - Check that Hbase is Running \n - Set the HBASE_CONF environment variable to the absolute path of your hadoop hbase-site.xml in your ~/.bashrc and then source ~/.bashrc");
 				return;
 			}
 		}
