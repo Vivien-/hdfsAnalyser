@@ -1,5 +1,8 @@
 function errorManager(status) {
 	switch(status){
+	case 1001:
+		error("Status " + status + ". Can't get Hadoop data, possible solution : <br>- Set the HADOOP_CONF environment variable to the absolute path of your hadoop hive-site.xml in your ~/.bashrc and then source ~/.bashrc <br>- Check that the HADOOP_CONF is set to a correct path and that the file is properly formated.", "error");
+		break;
 	default:
 		error("An unknown error occured <br>error status " + status, "error");
 		break;

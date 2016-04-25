@@ -151,8 +151,8 @@ function error(message, level) {
 		$(target)
 		.css("width", width)
 		.css("display", "inline-block");
-		var width = size.x;
-		var height = size.y;
+		var width = size.x - 20;
+		var height = size.y - 20;
 		var radius = Math.min(width, height) / 2;
 
 		var svg = d3.select(target)

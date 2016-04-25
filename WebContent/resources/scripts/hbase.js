@@ -10,13 +10,14 @@ e = d.documentElement,
 g = d.getElementsByTagName('body')[0],
 x = w.innerWidth || e.clientWidth || g.clientWidth,
 y = w.innerHeight|| e.clientHeight|| g.clientHeight;
-var color = d3.scale.category10();
-var margin = 20;
-var topButtonsMargin = $("#button").height();
-var gifSize = 100
-var width = 2*x/3-2*margin;
-var height = y-(topButtonsMargin  + 2*margin);
-var radius = Math.min(width, height) / 2;
+var color = d3.scale.category10(),
+	margin = 20,
+	topButtonsMargin = $("#button").height(),
+	gifSize = 100,
+	width = 2*x/3-2*margin,
+	height = y-(topButtonsMargin  + 2*margin),
+	radius = Math.min(width, height) / 2 - 10;
+	
 $("#waitChartTables")
 .css("position", "absolute")
 .css("left", ((2*x/3-gifSize)/2) + "px")
@@ -25,8 +26,7 @@ $("#tables")
 .css("position", "absolute")
 .css("left", (2*x/3 + margin) + "px")
 .css("top", topButtonsMargin + "px")
-.css("width", (x/3 - 2*margin)+ "px")
-.css("height", (y - topButtonsMargin) + "px");
+.css("width", (x/3 - 2*margin)+ "px");
 $("#chartTables")
 .css("position", "absolute")
 .css("left", (2*x/3 - 2*radius)/2 + "px")
