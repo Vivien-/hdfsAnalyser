@@ -7,6 +7,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import com.google.protobuf.ServiceException;
+
+import Exceptions.HBaseConfException;
+import Exceptions.HadoopConfException;
 import analyser.DFSAnalyser;
 
 /**
@@ -33,12 +36,15 @@ public class HbaseTables extends HttpServlet {
 			DFSAnalyser dfs = new DFSAnalyser();
 			String json;
 			json = dfs.getHbaseContent();
-			System.out.println("passed");
 			response.getWriter().print(json);
 		}
-		catch(IOException | ServiceException e){
-			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+		catch(HadoopConfException e){
+			response.sendError(1001);
 		}
+		catch(HBaseConfException e){
+			response.sendError(1002);
+		}
+		
 	}
 
 	/**
