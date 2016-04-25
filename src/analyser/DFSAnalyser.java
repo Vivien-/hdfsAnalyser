@@ -51,32 +51,63 @@ public class DFSAnalyser {
 		return -1;
 	}
 
-	public String diskUsage() throws IOException, URISyntaxException{
+	public String diskUsage() throws HadoopConfException{
 		JsonObject json = new JsonObject();
 		JsonObject global = new JsonObject();
-		String cf = System.getenv("HADOOP_CONF");
-		Path p = new Path(cf);
-		Configuration configuration = new Configuration(true);
-		configuration.addResource(p);
-		DistributedFileSystem hdfs = new DistributedFileSystem();
-		FileSystem fs = DistributedFileSystem.get(configuration);
-		hdfs = (DistributedFileSystem) fs;
-		hdfs.setConf(configuration);
-		DatanodeInfo[] dataNodes = hdfs.getDataNodeStats(DatanodeReportType.ALL);
-		json.add("summary", new JsonArray());
-		global.addProperty("used", hdfs.getStatus().getUsed());
-		global.addProperty("unused", hdfs.getStatus().getRemaining());
-		json.get("summary").getAsJsonArray().add(global);
-		for(int i = 0; i < dataNodes.length; i++){
-			JsonObject current = new JsonObject();
-			current.addProperty("name", dataNodes[i].getName());
-			current.addProperty("used", dataNodes[i].getDfsUsed());
-			current.addProperty("unused", dataNodes[i].getCapacity());
-			current.addProperty("percentage", dataNodes[i].getDfsUsedPercent());
-			current.addProperty("nondfs", dataNodes[i].getNonDfsUsed());
-			json.get("summary").getAsJsonArray().add(current);
+		try{
+			String cf = System.getenv("HADOOP_CONF");
+			Path p = new Path(cf);
+			Configuration configuration = new Configuration(true);
+			configuration.addResource(p);
+			DistributedFileSystem hdfs = (DistributedFileSystem)DistributedFileSystem.get(configuration);
+			try{
+				DatanodeInfo[] dataNodes = hdfs.getDataNodeStats(DatanodeReportType.ALL);
+				json.add("summary", new JsonArray());
+				json.addProperty("isOk", 1);
+				try{
+					global.addProperty("used", hdfs.getStatus().getUsed());
+					global.addProperty("unused", hdfs.getStatus().getRemaining());
+					json.get("summary").getAsJsonArray().add(global);
+					for(int i = 0; i < dataNodes.length; i++){
+						JsonObject current = new JsonObject();
+						try{
+							current.addProperty("name", dataNodes[i].getName());
+							current.addProperty("used", dataNodes[i].getDfsUsed());
+							current.addProperty("unused", dataNodes[i].getCapacity());
+							current.addProperty("percentage", dataNodes[i].getDfsUsedPercent());
+							current.addProperty("nondfs", dataNodes[i].getNonDfsUsed());
+							current.addProperty("isOk", 1);
+							json.get("summary").getAsJsonArray().add(current);
+						}
+						catch(Exception e){
+							System.out.println("problem in a node");
+							current.addProperty("isOk", 0);
+							json.get("summary").getAsJsonArray().add(current);
+						}
+					}
+					try{
+						json.addProperty("replication", hdfs.getFileStatus(new Path("/")).getReplication() + 1);
+					}
+					catch(Exception e){
+						json.addProperty("replication", -1);
+					}
+				}
+				catch(Exception e){
+					System.out.println("used or unused problem");
+					JsonObject errorGlobal = new JsonObject();
+					errorGlobal.addProperty("used", -1);
+					errorGlobal.addProperty("unused", -1);
+					json.get("summary").getAsJsonArray().add(errorGlobal);
+				}
+			}
+			catch(Exception e){
+				System.out.println("Can't access datanodes");
+				json.addProperty("isOk", 0);
+			}
 		}
-		json.addProperty("replication", hdfs.getFileStatus(new Path("/")).getReplication() + 1);
+		catch(Exception e){
+			throw new HadoopConfException();
+		}
 		return json.toString();
 	}
 
@@ -425,14 +456,17 @@ public class DFSAnalyser {
 						try{
 							size = hdfs.getContentSummary(new Path(location)).getLength();
 							location = location.replace(hbaseConf.get("fs.defaultFS"), "");
+							tmp.addProperty("name", name);
+							tmp.addProperty("location", location);
 							tmp.addProperty("size", size);
 							tmp.addProperty("isOk", 1);
 						}
 						catch(Exception e){
+							tmp.addProperty("name", name);
+							tmp.addProperty("location", location);
 							tmp.addProperty("isOk", 0);
 						}
-						tmp.addProperty("name", name);
-						tmp.addProperty("location", location);
+						
 						json.get("tbls").getAsJsonArray().add(tmp);
 					}
 				}

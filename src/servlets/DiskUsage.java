@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import Exceptions.HadoopConfException;
 import analyser.DFSAnalyser;
 
 /**
@@ -34,10 +35,11 @@ public class DiskUsage extends HttpServlet {
 		try {
 			DFSAnalyser dfs = new DFSAnalyser();
 			json = dfs.diskUsage();
-		} catch (URISyntaxException e) {	
-			e.printStackTrace();
+			response.getWriter().print(json);
+		} catch (HadoopConfException e) {	
+			response.sendError(1001);
 		}
-		response.getWriter().print(json);
+		
 	}
 
 	/**
