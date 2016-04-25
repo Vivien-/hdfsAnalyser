@@ -66,11 +66,14 @@ function errorManager(status) {
 }
 
 function errorManagerJSON(array_item) {
+	var dset = [];
 	for(var i = 0, len = array_item.length; i < len; i++) {
 		if(! parseInt(array_item[i].isOk)) {
 			error("Can not find " + array_item[i].label, "warning");
-		}
+		} else 
+			dset.push(array_item[i]);
 	}
+	return dset;
 }
 
 function error(message, level) {
@@ -144,7 +147,7 @@ function error(message, level) {
 			});
 		}
 
-		errorManagerJSON(data);
+		data = errorManagerJSON(data);
 		$(targetWaiter).hide();
 		$(target)
 		.css("width", width)

@@ -49,11 +49,14 @@ function errorManager(status) {
 }
 
 function errorManagerJSON(array_item) {
+	var dset = [];
 	for(var i = 0, len = array_item.length; i < len; i++) {
 		if(! parseInt(array_item[i].isOk)) {
-			error("Can not find " + array_item[i].label, "warning");
-		}
+			error("Can not find " + array_item[i].name + " at " + array_item[i].location, "warning");
+		} else 
+			dset.push(array_item[i]);
 	}
+	return dset;
 }
 
 function error(message, level) {
@@ -103,7 +106,7 @@ function error(message, level) {
 		var dataset = json.tbls.sort(function(a,b){
 			return parseInt(b.size) - parseInt(a.size);
 		});
-		errorManagerJSON(dataset);
+		dataset = errorManagerJSON(dataset);
 
 		var svg = d3.select('#chartTables')
 		.append('svg')
