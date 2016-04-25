@@ -70,7 +70,6 @@ function errorManagerJSON(array_item) {
 		if(! parseInt(array_item[i].isOk)) {
 			error("Can not find " + array_item[i].label, "warning");
 		}
-			
 	}
 }
 
@@ -144,6 +143,7 @@ function error(message, level) {
 				return parseInt(b.count) - parseInt(a.count);
 			});
 		}
+
 		errorManagerJSON(data);
 		$(targetWaiter).hide();
 		$(target)
