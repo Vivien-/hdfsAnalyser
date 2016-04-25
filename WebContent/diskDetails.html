@@ -8,9 +8,14 @@
 <script src="resources/scripts/d3.min.js" charset="utf-8"></script>
 </head>
 <body>
-	<a class="button" href="/HadoopAnalyser/Start">See HDFS globally</a>
+<a class="button" href="/HadoopAnalyser/Start">HDFS view</a>
+<a class="button" href="/HadoopAnalyser/Hive">Hive view</a>
+<a class="button" href="/HadoopAnalyser/Hbase">HBase view</a>
+<a class="button" href="/HadoopAnalyser/DiskDetails">Refresh disks details</a>
+
 	<div id="infoSize"></div>
 	<div id="datanodes"></div>
+	<div id="error" style="display:none; position: absolute; top:0px; left: 100px;"></div>
 	<script src="resources/scripts/datanodes.js" charset="utf-8"></script>
 </body>
 </html>

@@ -1,8 +1,45 @@
+function errorManager(status) {
+	switch(status){
+	default:
+		error("An unknown error occured <br>error status " + status, "error");
+		break;
+	}
+}
+
+function errorManagerJSON(obj) {
+	if(parseInt(obj.summary[0].used) == -1)
+		error("While accessing global used space. Returned " + obj.summary[0].used, "warning");
+	if(parseInt(obj.summary[0].unused) == -1)
+		error("While accessing global unused space. Returned " + obj.summary[0].used, "warning");
+	if(parseInt(obj.replication) == -1)
+		error("While accessing global replication factor. Returned " + obj.replication, "warning");
+	if(!parseInt(obj.isOk))
+		error("Can not access global datanodes informations.", "error");
+		
+	for(var i = 1, len = obj.summary.length; i < len; i++) {
+		if(!parseInt(obj.summary[i].isOk))
+			error("Can not access node  " + obj.summary[i].name, "warning");
+		if(parseInt(obj.summary[i].used) == -1)
+			error("Can not used space in node " + obj.summary[i].name, "warning");
+		if(parseInt(obj.summary[i].unused) == -1)
+			error("Can not unused space in node " + obj.summary[i].name, "warning");
+	}
+}
+
+function error(message, level) {
+	$("#error").append("<div class='message "+ level +"'>"+ level.toUpperCase() +": " + message +"</div>")
+			   .show();
+	$(".message:last").click(function() {$(this).fadeOut('fast'); });
+}
+
+
 function httpGetAsync(theUrl, callback) {
 	var xmlHttp = new XMLHttpRequest();
 	xmlHttp.onreadystatechange = function() { 
 		if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
 			callback(xmlHttp.responseText);
+		else if(xmlHttp.readyState == 4 && xmlHttp.status != 200)
+			errorManager(xmlHttp.status);
 	}
 	xmlHttp.open("GET", theUrl, true); // true for asynchronous which we want
 	xmlHttp.send(null);
@@ -82,11 +119,7 @@ function createWrapper() {
 
 httpGetAsync("/HadoopAnalyser/DiskUsage", function(json) {
 	var obj = JSON.parse(json);
-	
-	//uncomment to test ui with multiple datanodes
-//	for(var i = 0; i < 45; i++)
-//	obj.summary[i+2] = obj.summary[1];
-	
+	errorManagerJSON(obj);
 	$datanodes = $("#datanodes");
 	$datanodes.css({"margin-top": margin.top,
 					"margin-bottom": 0,
@@ -104,7 +137,7 @@ httpGetAsync("/HadoopAnalyser/DiskUsage", function(json) {
 	$("#infoSize").append("</br><div style='color:white;'>Replication factor : "+obj.replication+"</br>"+"Number of datanodes : "+(obj.summary.length-1)+"</div>")
 	$("#infoSize")
 	.css("position", "absolute")
-	.css("left", (x/4) + "px")
+	.css("left", "75%")
 	.css("top", "0px")
 	.css("z-index", 10);
 	

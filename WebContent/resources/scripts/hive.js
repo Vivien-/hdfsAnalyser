@@ -9,7 +9,6 @@ y = w.innerHeight|| e.clientHeight|| g.clientHeight;
 
 
 
-
 $("#waitChartDatabases")
 .css("position", "absolute")
 .css("left", (x/4 - 64 + 10) + "px")

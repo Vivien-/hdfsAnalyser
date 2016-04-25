@@ -190,8 +190,9 @@ path{
 	padding: 10px 15px 10px 15px;
 	border-radius:10px;
 	cursor: pointer; 
-	z-index: 9999999999999999;
 }
+
+#error { z-index: 99999999; }
 
 .error {
 	color: #D8000C;
