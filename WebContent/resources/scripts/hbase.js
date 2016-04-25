@@ -72,13 +72,6 @@ function error(message, level) {
 (function(d3) {
 	'use strict';
 
-	var dataset = [
-	               { label: 'Abulia', count: 10 }, 
-	               { label: 'Betelgeuse', count: 20 },
-	               { label: 'Cantaloupe', count: 30 },
-	               { label: 'Dijkstra', count: 40 }
-	               ];
-
 	function formatBytes(bytes,decimals) {
 		if(bytes == 0) return '0 o';
 		var k = 1000;
@@ -87,8 +80,6 @@ function error(message, level) {
 		var i = Math.floor(Math.log(bytes) / Math.log(k));
 		return (bytes / Math.pow(k, i)).toPrecision(dm) + ' ' + sizes[i];
 	}
-
-
 
 	function httpGetAsync(theUrl, callback1, callback2) {
 		$("#chartTables").empty();
@@ -107,12 +98,13 @@ function error(message, level) {
 		xmlHttp.send(null);
 	}
 
-
-
 	function drawPie(data){
 		var json = JSON.parse(data);
-		var dataset = json.tbls;
+		var dataset = json.tbls.sort(function(a,b){
+			return parseInt(b.size) - parseInt(a.size);
+		});
 		errorManagerJSON(dataset);
+
 		var svg = d3.select('#chartTables')
 		.append('svg')
 		.attr('width', 2*radius)
@@ -151,11 +143,11 @@ function error(message, level) {
 
 	function fillTable(data){
 		var json = JSON.parse(data);
-		console.log(json.tbls);
 		json.tbls.sort(function(a, b) {
 		    return parseInt(b.size) - parseInt(a.size);
 		});
 		for(var i = 0; i<json.tbls.length; i++){
+			if(!parseInt(json.tbls[i].isOk)) continue;
 			var col = color(json.tbls[i].name);
 			$("#databases_tbody").append("<tr class='db-info db-onclick' id='"+json.tbls[i].name+"'><td class='lalign' style='color: " + col + ";'>" + json.tbls[i].name + "</td><td style='color: " + col + ";'>" + json.tbls[i].location + "</td> <td style='color: " + col + ";'> " + formatBytes(json.tbls[i].size,2) + "</td>");
 		}
