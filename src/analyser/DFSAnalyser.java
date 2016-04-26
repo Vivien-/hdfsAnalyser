@@ -112,6 +112,7 @@ public class DFSAnalyser {
 	}
 
 	public String jsonify(TreeMap<String,Map<String, Long>> treemap, int msize) {
+		long startTime  = System.nanoTime();
 		long minSize = (long) Math.pow(10, msize);
 		boolean first = true;
 		JsonObject json = new JsonObject();
@@ -169,6 +170,8 @@ public class DFSAnalyser {
 			}
 		}
 		json_f.get("children").getAsJsonArray().add(json);
+		long endTime = System.nanoTime();
+		System.out.println("jsonify : "+(endTime - startTime));
 		return json_f.toString();
 	}
 
@@ -181,12 +184,16 @@ public class DFSAnalyser {
 		configuration.addResource(p);
 		FileSystem hdfs;
 		hdfs = FileSystem.get(configuration);
+		long startTime = System.nanoTime();
 		RemoteIterator<LocatedFileStatus> it = hdfs.listFiles(new Path("/"), true);
+		long endTime = System.nanoTime();
+		System.out.println("list files : "+(endTime - startTime));
 		LocatedFileStatus next;
 		String path;
 		String name;
 		Long size;
 		String parentPath;
+		startTime = System.nanoTime();
 		while(it.hasNext())
 		{
 			next = it.next();
@@ -199,6 +206,8 @@ public class DFSAnalyser {
 				structure.put(parentPath, new HashMap<String,Long>());
 			structure.get(parentPath).put(name, size);
 		}
+		endTime = System.nanoTime();
+		System.out.println("fill treemap : "+(endTime - startTime));
 		return structure;
 	}
 	
