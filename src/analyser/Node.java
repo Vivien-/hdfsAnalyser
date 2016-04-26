@@ -9,14 +9,20 @@ public class Node{
     private String data;
     private long size;
     private Timestamp lastModified;
+    private String path;
+	
+
+
+
 	private ArrayList<Node> children;
 
 	
 	
-    public Node(String data, long size, long lastModified){
+    public Node(String data, long size, long lastModified, String path){
         this.data = data;
         this.size = size;
         this.lastModified = new Timestamp(lastModified);
+        this.path = path;
         children = new ArrayList<Node>();
     }
 
@@ -84,5 +90,14 @@ public class Node{
 	public void setLastModified(long lastModified) {
 		this.lastModified.setTime(lastModified);
 	}
+	
+	public String getPath() {
+		return path;
+	}
+	
+	public void setPath(String path) {
+		this.path = path;
+	}
+
 
 }
