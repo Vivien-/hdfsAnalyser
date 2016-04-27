@@ -107,7 +107,7 @@
 	var explore = $('#infos').css("height");
 
 	var start = new Date().getTime();
-	d3.json("/HadoopAnalyser/FileContent?minSize=" + $("#range").val(), function(error, root) {
+	d3.json("/HadoopAnalyser/HDFSContent?minSize=" + $("#range").val(), function(error, root) {
 		$("#wait").hide();
 		if(error) {
 			$("#error").show();

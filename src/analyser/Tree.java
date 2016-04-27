@@ -1,30 +1,36 @@
 package analyser;
 
+import java.io.Serializable;
 import java.util.*;
+import javax.enterprise.context.SessionScoped;
+import javax.inject.Named;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
-
 import com.google.common.collect.TreeTraverser;
-import com.google.inject.servlet.SessionScoped;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import Exceptions.HadoopConfException;
 
-
 @SessionScoped
-public class Tree
-{
+@Named("tree")
+public class Tree implements Serializable, TreeI{
    
-    private Node root;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private Node root;
     private int minSize;
     private boolean isInitilized;
     
-    public Tree(int minSize){
+    public Tree(){
         root = new Node("/", 0, 0, "/");
-        this.minSize = minSize;
+        this.minSize = 0;
         this.isInitilized = false;
     }
 
@@ -38,16 +44,18 @@ public class Tree
     		root.setLastModified(lastModified);
     	Node current = root;
         StringTokenizer s = new StringTokenizer(str, "/");
-        String path = str;
+        String path = "";
         while(s.hasMoreElements())
         {
+        	
             str = (String)s.nextElement();
+            path = path+"/"+str;
             Node child = current.getChild(str);
             if(child==null)
             {
             	if(!s.hasMoreElements() && size < minSize){
             		if(current.getChild("others") == null)
-            			current.getChildren().add(new Node("others", size, lastModified,path.substring(0, path.lastIndexOf("/")+1)+"others"));
+            			current.getChildren().add(new Node("others", size, lastModified,path.substring(0, path.lastIndexOf("/")).substring(0, path.lastIndexOf("/"))+"/others"));
             		else{
             			current.getChild("others").setSize(current.getChild("others").getSize() + size);
             			if(lastModified > current.getChild("others").getLastModified())
@@ -92,6 +100,7 @@ public class Tree
 				path = path.replace(configuration.get("fs.defaultFS"), "");
 				this.add(path, size, lastModified);
 			}
+			this.isInitilized = true;
 		}
 		catch(Exception e){
 			throw new HadoopConfException();
@@ -133,21 +142,63 @@ public class Tree
     	    }
     	};
     	for (Node node : traverser.preOrderTraversal(root)) {
-    		System.out.println(node.getData()+" : "+node.getSize()+" : "+node.getLastModified()+" : "+node.getPath());
+    		//System.out.println(node.getData()+" : "+node.getSize()+" : "+node.getLastModified()+" : "+node.getPath());
     	}
     }
 	
 	public String getJson(){
-		return null;
+		TreeTraverser<Node> traverser = new TreeTraverser<Node>() {
+    	    @Override
+    	    public Iterable<Node> children(Node root) {
+    	    	return root.getChildren();
+    	    }
+    	};
+    	
+    	//this is the final json that is going to get returned
+    	JsonObject json_f = new JsonObject(); 
+    	//we store the json objects under their key so we can quickly access the parent of the current json
+    	Map <String, JsonObject> mapJson = new HashMap<String, JsonObject>();
+    	
+    	for (Node node : traverser.preOrderTraversal(root)) {
+    		JsonObject json = new JsonObject();
+    		String parentKey = node.getPath().substring(0, node.getPath().lastIndexOf("/"));
+    		
+    		JsonObject parentJson = json_f;
+    		if(parentKey != null && !parentKey.isEmpty()) {
+    			parentJson = mapJson.get(parentKey);
+    		}
+    		
+    		json.addProperty("name", node.getData());
+    		int nchild = node.getChildren().size();
+    		if(nchild > 0) { //node is a directory containing at least 1 child
+    			json.add("children",new JsonArray());
+    		} else {       //node is a file
+    			json.addProperty("size", node.getSize());	
+    		}
+    		
+    		if(parentJson != null) {
+    			try {
+    				parentJson.get("children").getAsJsonArray().add(json);
+    			} catch(Exception e) {
+    				json_f.addProperty("name", "/");
+    				json_f.add("children", new JsonArray());	
+    			}
+    		}
+    			
+    		
+    		mapJson.put(node.getPath(), json);
+    	}
+		return json_f.toString();
 	}
-	public static void main (String[] args){
-		Tree t = new Tree(5000);
-		t.add("/tmp/dir1/file1", 3000, 1000);
-		t.add("/tmp/dir1/file2", 1500, 1430);
-		t.add("/tmp/dir1/file3", 6000, 2455);
-		t.add("/tmp/dir2/file4", 1000, 1065);
-		t.add("/tmp/dir3/file5", 2346, 1235);
-		t.add("/tmp/dir2/file6", 5423, 10);
-		//t.traverse();
-	}
+//	public static void main (String[] args){
+//		Tree t = new Tree();
+//		t.setMinSize(5000);
+//		t.add("tmp/dir1/file1", 3000, 1000);
+//		t.add("/tmp/dir1/file2", 1500, 1430);
+//		t.add("/tmp/dir1/file3", 6000, 2455);
+//		t.add("/tmp/dir2/file4", 1000, 1065);
+//		t.add("/tmp/dir3/file5", 2346, 1235);
+//		t.add("tmp/dir2/file6", 5423, 10);
+//		t.update();
+//	}
 }
