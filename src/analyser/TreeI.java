@@ -7,7 +7,7 @@ public interface TreeI {
 
 	public boolean isEmpty();
 
-	public void init() throws HadoopConfException;
+	public void init(int minSize) throws HadoopConfException;
 
 	public Node getRoot();
 
@@ -21,7 +21,7 @@ public interface TreeI {
 	public boolean isInitilized();
 
 	public void setInitilized(boolean isInitilized);
-	public void update();
+	public void update(int minSize) throws HadoopConfException;
 
 	public String getJson();		
 }

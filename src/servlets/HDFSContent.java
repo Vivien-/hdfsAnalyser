@@ -38,12 +38,13 @@ public class HDFSContent extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
 		int minSize = Integer.parseInt(request.getParameter("minSize"));
-		tree.setMinSize((int)Math.pow(10, minSize));
+		minSize = (int)Math.pow(10, minSize);
+		
 		if(!tree.isInitilized()){
 			try{
 				System.out.println("init");
 				long startTime = System.nanoTime();
-				tree.init();
+				tree.init(minSize);
 				long endTime = System.nanoTime();
 				System.out.println("init :"+(endTime - startTime));
 				startTime = System.nanoTime();
@@ -59,7 +60,12 @@ public class HDFSContent extends HttpServlet {
 		else{
 			System.out.println("update");
 			long startTime = System.nanoTime();
-			tree.update();
+			try {
+				tree.update(minSize);
+			} catch (HadoopConfException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			long endTime = System.nanoTime();
 			System.out.println("update :"+(endTime - startTime));
 			response.getWriter().print(tree.getJson());

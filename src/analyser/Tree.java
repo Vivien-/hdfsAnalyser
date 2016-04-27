@@ -1,5 +1,7 @@
 package analyser;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
 import javax.enterprise.context.SessionScoped;
@@ -27,11 +29,23 @@ public class Tree implements Serializable, TreeI{
 	private Node root;
     private int minSize;
     private boolean isInitilized;
+    private FileSystem hdfs;
     
-    public Tree(){
-        root = new Node("/", 0, 0, "/");
-        this.minSize = 0;
-        this.isInitilized = false;
+    
+    public Tree() throws HadoopConfException{
+    	try{
+    		String cf = System.getenv("HADOOP_CONF");
+    		Path p = new Path(cf);
+    		Configuration configuration = new Configuration(true);
+    		configuration.addResource(p);
+    		hdfs = FileSystem.get(configuration);
+    		root = new Node("/", 0, 0, "/");
+    		this.minSize = 0;
+    		this.isInitilized = false;
+    	}
+    	catch(Exception e){
+    		throw new HadoopConfException();
+    	}
     }
 
     public boolean isEmpty(){
@@ -39,27 +53,30 @@ public class Tree implements Serializable, TreeI{
     }
 
     private void add(String str, long size, long lastModified){
+    	String other_name = "others-LT" + minSize;
     	root.setSize(root.getSize()+size);
     	if(lastModified > root.getLastModified())
     		root.setLastModified(lastModified);
     	Node current = root;
         StringTokenizer s = new StringTokenizer(str, "/");
         String path = "";
-        while(s.hasMoreElements())
-        {
-        	
+        while(s.hasMoreElements()) {
             str = (String)s.nextElement();
             path = path+"/"+str;
             Node child = current.getChild(str);
-            if(child==null)
-            {
+            if(child != null && !s.hasMoreElements()) {
+            	current.getChildren().remove(child);
+            	child = null;
+            }
+            
+            if(child == null) {
             	if(!s.hasMoreElements() && size < minSize){
-            		if(current.getChild("others") == null)
-            			current.getChildren().add(new Node("others", size, lastModified,path.substring(0, path.lastIndexOf("/")).substring(0, path.lastIndexOf("/"))+"/others"));
+            		if(current.getChild(other_name) == null)
+            			current.getChildren().add(new Node(other_name, size, lastModified,path.substring(0, path.lastIndexOf("/")).substring(0, path.lastIndexOf("/"))+"/"+other_name));
             		else{
-            			current.getChild("others").setSize(current.getChild("others").getSize() + size);
-            			if(lastModified > current.getChild("others").getLastModified())
-            				current.getChild("others").setLastModified(lastModified);
+            			current.getChild(other_name).setSize(current.getChild(other_name).getSize() + size);
+            			if(lastModified > current.getChild(other_name).getLastModified())
+            				current.getChild(other_name).setLastModified(lastModified);
             		}
             	}
             	else{
@@ -76,29 +93,27 @@ public class Tree implements Serializable, TreeI{
         }
     }
 
-	public void init() throws HadoopConfException{
+	public void init(int minSize) throws HadoopConfException{
 		try{
-			String cf = System.getenv("HADOOP_CONF");
-			Path p = new Path(cf);
-			Configuration configuration = new Configuration(true);
-			configuration.addResource(p);
-			FileSystem hdfs;
-			hdfs = FileSystem.get(configuration);
+			this.setMinSize(minSize);
 			RemoteIterator<LocatedFileStatus> it = hdfs.listFiles(new Path("/"), true);
 			LocatedFileStatus next;
 			String path;
 			String name;
 			long size;
 			long lastModified;
-			while(it.hasNext())
-			{
-				next = it.next();
-				path = next.getPath().toString();
-				name = next.getPath().getName();
-				size = next.getLen();
-				lastModified = next.getAccessTime();
-				path = path.replace(configuration.get("fs.defaultFS"), "");
-				this.add(path, size, lastModified);
+			try{
+				while(it.hasNext()) {
+					next = it.next();
+					path = next.getPath().toString();
+					name = next.getPath().getName();
+					size = next.getLen();
+					lastModified = next.getAccessTime();
+					path = path.replace(hdfs.getConf().get("fs.defaultFS"), "");
+					this.add(path, size, lastModified);
+				}
+			} catch(Exception e){
+				throw new HadoopConfException();
 			}
 			this.isInitilized = true;
 		}
@@ -106,8 +121,7 @@ public class Tree implements Serializable, TreeI{
 			throw new HadoopConfException();
 		}
 	}
-
-    
+	
     public Node getRoot() {
 		return root;
 	}
@@ -123,8 +137,6 @@ public class Tree implements Serializable, TreeI{
 	public void setMinSize(int minSize) {
 		this.minSize = minSize;
 	}
-
-	
 	
 	public boolean isInitilized() {
 		return isInitilized;
@@ -134,16 +146,73 @@ public class Tree implements Serializable, TreeI{
 		this.isInitilized = isInitilized;
 	}
 
-	public void update(){
-    	TreeTraverser<Node> traverser = new TreeTraverser<Node>() {
+	private void updateMinSize(int newMinSize) throws HadoopConfException {
+		root = new Node("/", 0, 0, "/");
+        this.minSize = newMinSize;
+        this.isInitilized = false;
+    	init(newMinSize);
+	}
+	
+	private void updateLastModified() {
+		TreeTraverser<Node> traverser = new TreeTraverser<Node>() {
     	    @Override
     	    public Iterable<Node> children(Node root) {
-    	    	return root.getChildren();
+    	    	LocatedFileStatus fs = new LocatedFileStatus();
+    	    	ArrayList<Node> children = root.getChildren();
+    	    	ArrayList<Node> ret = new ArrayList<Node>();
+    	    	for(Node child : children) {
+    	    		try {
+    	    			long hdfsAccessTime = hdfs.getFileStatus(new Path(child.getPath())).getAccessTime();
+    	    			if(child.getLastModified() < hdfsAccessTime) {
+        	    			ret.add(child);
+        	    		}
+    	    		} catch (Exception e) {
+    	    			e.printStackTrace();
+    	    		}
+    	    		
+    	    	}
+				return ret;
     	    }
     	};
+    	
     	for (Node node : traverser.preOrderTraversal(root)) {
-    		//System.out.println(node.getData()+" : "+node.getSize()+" : "+node.getLastModified()+" : "+node.getPath());
+    		try {
+				if(hdfs.getContentSummary(new Path("")).getFileCount() > 0) {
+					try {
+						RemoteIterator<LocatedFileStatus> it = hdfs.listFiles(new Path(node.getPath()), false);
+						LocatedFileStatus next;
+						String path;
+						String name;
+						long size;
+						long lastModified;
+						while(it.hasNext()) {
+							next = it.next();
+							path = next.getPath().toString();
+							name = next.getPath().getName();
+							size = next.getLen();
+							lastModified = next.getAccessTime();
+							path = path.replace(hdfs.getConf().get("fs.defaultFS"), "");
+							this.add(path, size, lastModified);
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}	
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public void update(int minSize) throws HadoopConfException{
+    	if(minSize != this.getMinSize()) {
+    		try {
+    			updateMinSize(minSize);
+    		} catch (HadoopConfException e) {
+    			throw new HadoopConfException();
+    		}
     	}
+    	updateLastModified();
     }
 	
 	public String getJson(){
@@ -184,21 +253,8 @@ public class Tree implements Serializable, TreeI{
     				json_f.add("children", new JsonArray());	
     			}
     		}
-    			
-    		
     		mapJson.put(node.getPath(), json);
     	}
 		return json_f.toString();
 	}
-//	public static void main (String[] args){
-//		Tree t = new Tree();
-//		t.setMinSize(5000);
-//		t.add("tmp/dir1/file1", 3000, 1000);
-//		t.add("/tmp/dir1/file2", 1500, 1430);
-//		t.add("/tmp/dir1/file3", 6000, 2455);
-//		t.add("/tmp/dir2/file4", 1000, 1065);
-//		t.add("/tmp/dir3/file5", 2346, 1235);
-//		t.add("tmp/dir2/file6", 5423, 10);
-//		t.update();
-//	}
 }
