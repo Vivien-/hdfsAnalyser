@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 
 
 import Exceptions.HadoopConfException;
-import analyser.Tree;
 import analyser.TreeI;
 
 /**
@@ -42,33 +41,21 @@ public class HDFSContent extends HttpServlet {
 		
 		if(!tree.isInitilized()){
 			try{
-				System.out.println("init");
-				long startTime = System.nanoTime();
-				tree.init(minSize);
-				long endTime = System.nanoTime();
-				System.out.println("init :"+(endTime - startTime));
-				startTime = System.nanoTime();
-				String json = tree.getJson();
-				endTime = System.nanoTime();
-				System.out.println("getJson :"+(endTime - startTime));
-				response.getWriter().print(json);
+				tree.init(minSize, "/");
+				response.getWriter().print(tree.getJson());
 			}
 			catch(HadoopConfException e){
 				response.sendError(1001);
 			}
 		}
 		else{
-			System.out.println("update");
-			long startTime = System.nanoTime();
 			try {
 				tree.update(minSize);
+				response.getWriter().print(tree.getJson());
 			} catch (HadoopConfException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				response.sendError(1001);
 			}
-			long endTime = System.nanoTime();
-			System.out.println("update :"+(endTime - startTime));
-			response.getWriter().print(tree.getJson());
+			
 		}
 	}
 

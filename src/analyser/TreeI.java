@@ -7,7 +7,7 @@ public interface TreeI {
 
 	public boolean isEmpty();
 
-	public void init(int minSize) throws HadoopConfException;
+	public void init(int minSize, String root) throws HadoopConfException;
 
 	public Node getRoot();
 
