@@ -144,6 +144,7 @@ httpGetAsync("/HadoopAnalyser/DiskUsage", function(json) {
 	.css("top", "0px")
 	.css("z-index", 10);
 	
+	
 	length = obj.summary.length - 1;
 	var size_min = 100,
 		size_max = 500;

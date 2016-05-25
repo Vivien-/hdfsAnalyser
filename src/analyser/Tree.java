@@ -33,6 +33,10 @@ public class Tree implements Serializable, TreeI{
 	private FileSystem hdfs;
 
 
+	/**
+	 * Constructor: initialize root and hdfs
+	 * @throws HadoopConfException
+	 */
 	public Tree() throws HadoopConfException{
 		try{
 			String cf = System.getenv("HADOOP_CONF");
@@ -53,6 +57,12 @@ public class Tree implements Serializable, TreeI{
 		return root==null;
 	}
 
+	/**
+	 * Add a node to the current tree
+	 * @param str
+	 * @param size
+	 * @param lastModified
+	 */
 	private void add(String str, long size, long lastModified){
 		String other_name = "others-LT" + minSize;
 		root.setSize(root.getSize()+size);
@@ -64,6 +74,8 @@ public class Tree implements Serializable, TreeI{
 			str = s[i];
 			path = path+"/"+str;
 			Node child = current.getChild(str);
+			Node t_child = child;
+			
 			if(child != null && (i == s.length-1)) {
 				current.getChildren().remove(child);
 				child = null;
@@ -78,21 +90,28 @@ public class Tree implements Serializable, TreeI{
 						if(lastModified > current.getChild(other_name).getLastModified())
 							current.getChild(other_name).setLastModified(lastModified);
 					}
+					t_child = current.getChild(other_name);
 				}
 				else{
 					current.getChildren().add(new Node(str, size, lastModified, path));
+					t_child = current.getChild(str);
 				}
 				child = current.getChild(str);
 			}
-			else{	
+			else {	
 				child.setSize(child.getSize()+size);
 			}
+			if(t_child != null) {
+				t_child.setParent(current);
+			}
+				
 			if((i == s.length-2) && (lastModified > current.getLastModified()))
 				current.setLastModified(lastModified);
 			current = child;
 		}
 	}
 
+	
 	public void init(int minSize, String root) throws HadoopConfException{
 		try{
 			this.setMinSize(minSize);
@@ -160,7 +179,7 @@ public class Tree implements Serializable, TreeI{
 			Path p = new Path(directory.getPath());
 			FileStatus[] t = hdfs.listStatus(p);
 			Boolean needUpdate = (directory.getLastModified() != hdfsAccessTime);
-			if(!needUpdate){
+			if(!needUpdate) {
 				for(int i = 0; i < t.length; i++) {
 					if(t[i].isDirectory()) {
 						String pathStr = t[i].getPath().toString();
@@ -220,16 +239,31 @@ public class Tree implements Serializable, TreeI{
 	private void deleteOldElement(Node dir) {
 		ArrayList<Node> children = dir.getChildren();
 		ArrayList<Node> newChildren = new ArrayList<Node>();
+		int size = 0;
+		Node parent = dir.getParent();
+		Node curent = dir;
 		for(Node child : children) {
 			try {
-				if(hdfs.exists(new Path(child.getPath()))) {
+				if(hdfs.exists(new Path(child.getPath())) || child.getData().equals("others-LT" + minSize)) {
 					newChildren.add(child);
+					size += child.getSize();
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
+		dir.setSize(size);
 		dir.setChildren(newChildren);
+
+		while(true) {
+			if(curent != null && ! curent.equals(root) && (curent.getSize() == 0 || curent.getChildren().size() == 0)) {
+				parent.getChildren().remove(curent);
+				curent = parent;
+				parent = curent.getParent();
+			} else {
+				break;
+			}
+		}
 	}
 
 
