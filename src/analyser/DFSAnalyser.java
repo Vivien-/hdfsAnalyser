@@ -1,3 +1,7 @@
+/**
+ * @author Mohammed El Moumni, Vivien Achet
+ */
+
 package analyser;
 
 import java.io.IOException;
@@ -35,7 +39,19 @@ import Exceptions.HBaseConfException;
 import Exceptions.HadoopConfException;
 import Exceptions.HiveConfException;
 
-
+/**
+ * 
+ * What this class represent:
+ * 		This class fetch the datas in the file system and format them into json so that they can be send
+ * 		and displayed on the client browser
+ * 
+ * 		Datas fetched includes :
+ * 			- Hbase databases
+ * 			- Hive databases (externals and internals)
+ * 			- Hadoop file system architecture
+ * 			- Datanodes state
+ *
+ */
 public class DFSAnalyser {
 
 	
@@ -51,6 +67,15 @@ public class DFSAnalyser {
 		return -1;
 	}
 
+	/**
+	 * Ensures:
+	 * 		- if it can fetch datas from hdfs: 
+	 * 			returns the json object representing datanodes state
+	 * 		- else: 
+	 * 			throw an error so that the client receive an error message accordingly
+	 * @return
+	 * @throws HadoopConfException
+	 */
 	public String diskUsage() throws HadoopConfException{
 		JsonObject json = new JsonObject();
 		JsonObject global = new JsonObject();
@@ -101,7 +126,6 @@ public class DFSAnalyser {
 				}
 			}
 			catch(Exception e){
-				System.out.println("Can't access datanodes");
 				json.addProperty("isOk", 0);
 			}
 		}
@@ -111,6 +135,14 @@ public class DFSAnalyser {
 		return json.toString();
 	}
 
+	/**
+	 * @deprecated
+	 * Use only if there is an issue with the Node/Tree analyser Class
+	 * 
+	 * @param treemap
+	 * @param msize
+	 * @return
+	 */
 	public String jsonify(TreeMap<String,Map<String, Long>> treemap, int msize) {
 		long startTime  = System.nanoTime();
 		long minSize = (long) Math.pow(10, msize);
@@ -171,10 +203,18 @@ public class DFSAnalyser {
 		}
 		json_f.get("children").getAsJsonArray().add(json);
 		long endTime = System.nanoTime();
-		System.out.println("jsonify : "+(endTime - startTime));
 		return json_f.toString();
 	}
 
+	/**
+	 * @deprecated
+	 * Use only if there is an issue with the Node/Tree analyser Class
+	 * 
+	 * @return
+	 * @throws IllegalArgumentException
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 */
 	public TreeMap<String,Map<String, Long>> getHDFSContent() throws IllegalArgumentException, IOException, URISyntaxException{
 		TreeMap<String,Map<String, Long>> structure = new TreeMap<String, Map<String, Long>>();
 		String cf = System.getenv("HADOOP_CONF");
@@ -187,7 +227,6 @@ public class DFSAnalyser {
 		long startTime = System.nanoTime();
 		RemoteIterator<LocatedFileStatus> it = hdfs.listFiles(new Path("/"), true);
 		long endTime = System.nanoTime();
-		System.out.println("list files : "+(endTime - startTime));
 		LocatedFileStatus next;
 		String path;
 		String name;
@@ -207,10 +246,23 @@ public class DFSAnalyser {
 			structure.get(parentPath).put(name, size);
 		}
 		endTime = System.nanoTime();
-		System.out.println("fill treemap : "+(endTime - startTime));
 		return structure;
 	}
 	
+	/**
+	 * Ensures:
+	 * 		- if it can fetch datas from hive: 
+	 * 			returns the json object representing hive global content 
+	 * 		- else: 
+	 * 			throw an error so that the client receive an error message accordingly
+	 * 
+	 * @return
+	 * @throws NoSuchObjectException
+	 * @throws TException
+	 * @throws IllegalArgumentException
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
 	public String getHiveContent() throws NoSuchObjectException, TException, IllegalArgumentException, IOException, ClassNotFoundException{
 		//Getting Environnement variables locations
 		String hiveCf = System.getenv("HIVE_CONF");
@@ -284,7 +336,17 @@ public class DFSAnalyser {
 		return json.toString();
 	}
 
-
+	/**
+	 *  Ensures:
+	 * 		- if it can fetch datas from hive: 
+	 * 			returns the json object representing hive databases 
+	 * 		- else: 
+	 * 			throw an error so that the client receive an error message accordingly
+	 * 
+	 * @return
+	 * @throws HadoopConfException
+	 * @throws HiveConfException
+	 */
 	public String databases() throws HadoopConfException, HiveConfException{
 		JsonObject json = new JsonObject();
 		try{
@@ -338,7 +400,6 @@ public class DFSAnalyser {
 							}		
 						}
 						catch(Exception e){
-							System.out.println("hive can't find database : "+db);
 							dbJson.addProperty("label", db);
 							dbJson.addProperty("isOk", 0);
 							json.get("dbs").getAsJsonArray().add(dbJson);
@@ -363,6 +424,18 @@ public class DFSAnalyser {
 		return json.toString();
 	}
 
+	/**
+	 * Ensures:
+	 * 		- if it can fetch datas from hive: 
+	 * 			returns the json object representing hive tables 
+	 * 		- else: 
+	 * 			throw an error so that the client receive an error message accordingly
+	 * 
+	 * @param database
+	 * @return
+	 * @throws HadoopConfException
+	 * @throws HiveConfException
+	 */
 	public String tables(String database) throws HadoopConfException, HiveConfException{
 		JsonObject json = new JsonObject();
 		try{
@@ -428,7 +501,20 @@ public class DFSAnalyser {
 		return json.toString();
 	}
 	
-	//works for hbase +0.98
+	/**
+	 * 
+	 * Requires:
+	 * 		works only for hbase v0.98 or more
+	 * Ensures:
+	 * 		- if it can fetch datas from hbase: 
+	 * 			returns the json object representing hbase tables 
+	 * 		- else: 
+	 * 			throw an error so that the client receive an error message accordingly
+	 * 
+	 * @return
+	 * @throws HBaseConfException
+	 * @throws HadoopConfException
+	 */
 	public String getHbaseContent() throws HBaseConfException, HadoopConfException{
 		JsonObject json = new JsonObject();
 		json.add("tbls", new JsonArray());

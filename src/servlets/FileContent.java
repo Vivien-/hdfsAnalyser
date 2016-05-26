@@ -1,3 +1,12 @@
+/**
+ * @author Mohammed El Moumni, Vivien Achet
+ * @deprecated servlet, to use only if Start servlet does not work
+ * 		Start servlet uses Node and Tree analyser, so if those classes does not work, use this servlet coupled
+ * 		with DFSAnalyser analyser.
+ * 
+ *  Utility: sens a json describing the cluster architecture
+ */
+
 package servlets;
 
 import java.io.IOException;
@@ -23,7 +32,6 @@ public class FileContent extends HttpServlet {
      */
     public FileContent() {
         super();
-        // TODO Auto-generated constructor stub
     }
 
 	/**

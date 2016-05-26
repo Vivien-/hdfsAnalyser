@@ -1,3 +1,9 @@
+/**
+ * @author Mohammed El Moumni, Vivien Achet
+ * 
+ * Utility: dispatch the user to hdfsVisualizer.html
+ */
+
 package servlets;
 
 import java.io.IOException;
@@ -19,7 +25,6 @@ public class Start extends HttpServlet {
      */
     public Start() {
         super();
-        // TODO Auto-generated constructor stub
     }
 
 	/**
@@ -33,7 +38,6 @@ public class Start extends HttpServlet {
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
 		doGet(request, response);
 	}
 

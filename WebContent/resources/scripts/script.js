@@ -1,3 +1,26 @@
+/**
+ * 
+ *  Overall view that should be created by this script: 
+ *  ________________________________________
+ * | <nav buttons>		|					|
+ * |					|					|
+ * |					|	   overall		|
+ * |					|	 disk usage		|
+ * |					|					|
+ * |					|					|
+ * |   the whole tree	|					|
+ * |	  cluser		|___________________|
+ * |	visualized		|					|
+ * |  using sunburst	|					|
+ * |					|		path		|
+ * |					|	corresponding	|
+ * |					|	to the child	|
+ * |					|	 of current		|
+ * |  <minSize range>	|	 directory		|
+ * |____________________|___________________|
+ * 
+ */
+
 (function() {
 	"use strict";
 
@@ -67,6 +90,7 @@
 	.clamp(true)
 	.range([90, 20]);
 
+	// generate a tooltip when mouseover the arc
 	var tip = d3.tip()
 	.attr('class', 'd3-tip')
 	.direction("e")
@@ -77,6 +101,28 @@
 		return d.name + "<br>" + "<span style='color:orangered'>" + formatBytes(d.value, 2) + "</span>";
 	});
 
+	// creating the svg element that wrapp the sunburst, and placing it at the correct place 
+	
+	/**
+	 * Here we are creating the left part of the screen: 
+	 *  _____________________ 
+	 * |	<button>		| ...
+	 * |					| ...
+	 * |					| ...
+	 * |					| ...
+	 * |					| ...
+	 * |					| ...
+	 * |   the whole tree	| ...
+	 * |	  cluser		| ...
+	 * |	visualized		| ...
+	 * |  using sunburst	| ...
+	 * |					| ...
+	 * |					| ...
+	 * |					| ...
+	 * |					| ...
+	 * |  <minSize range>	| ...
+	 * |____________________| ...
+	 */
 	var svg = d3.select("body").append("svg")
 	.attr("width", (numberOfLayers*2*radius) + "px")
 	.attr("height", (numberOfLayers*2*radius) + "px")
@@ -106,12 +152,17 @@
 
 	var explore = $('#infos').css("height");
 
+	// get time to know how long the servlet takes time to send the response
 	var start = new Date().getTime();
+	// send a request to the HDFSContent servlet
+	// if the HDFSContent has some issue, you may fallback to using the less optimized FileContent servlet
 	d3.json("/HadoopAnalyser/HDFSContent?minSize=" + $("#range").val(), function(error, root) {
 		$("#wait").hide();
 		if(error) {
 			$("#error").show();
+			//TODO : real error handler like in the other scripts
 		} else {
+			// compute and display the time it took for the servlet to answer the request
 			var end = new Date().getTime();
 			$("#time").text("hdfs fetched in " + (end-start)/1000 + "s");		
 		}
@@ -417,6 +468,27 @@
 	}
 
 	d3.select(self.frameElement).style("height", margin.top + margin.bottom + "px");
+	
+	/**
+	 * Here we are creating the rights part of the screen: 
+	 *     _________________
+	 * ...|					|
+	 * ...|					|
+	 * ...|	   overall		|
+	 * ...|	 disk usage		|
+	 * ...|					|
+	 * ...|					|
+	 * ...|_________________|
+	 * ...|					|
+	 * ...|		path		|
+	 * ...|	corresponding	|
+	 * ...|	to the child	|
+	 * ...|	 of current		|
+	 * ...|	 directory		|
+	 * ...|_________________|
+	 * 
+	 */
+
 
 	$("#wait")
 	.css("position", "absolute")
@@ -467,6 +539,10 @@
 	.css("top",y-20)
 	.css("left",0);
 
+	/**
+	 * Now we are building the right part of the screen: 
+	 */
+	
 	y = y/2; //now we divide the height by 2 and only work in the bottom or top part
 	var this_radius = 0,
 		marg = 0;
@@ -495,7 +571,7 @@
 		var obj = JSON.parse(json);
 		var dataset = [{ label: 'Used space', count: obj.summary[0].used}, 
 		               { label: 'Free space', count: obj.summary[0].unused}];
-		//4 times smaller than sunburst
+		//4 times smaller than sunburst (diameter is half of the one of the sunburst)
 
 		var vis = d3.select("#chart")
 		.append("svg:svg") //create the SVG element inside the <body>

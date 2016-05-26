@@ -1,3 +1,9 @@
+/**
+ * @author Mohammed El Moumni, Vivien Achet
+ * 
+ * Utility: send a json describing the hive databases. 
+ */
+
 package servlets;
 
 import java.io.IOException;
@@ -15,6 +21,9 @@ import analyser.DFSAnalyser;
 
 /**
  * Servlet implementation class Databases
+ * 
+ * Get the Hive databases
+ * 
  */
 @WebServlet("/Databases")
 public class Databases extends HttpServlet {
@@ -25,14 +34,12 @@ public class Databases extends HttpServlet {
      */
     public Databases() {
         super();
-        // TODO Auto-generated constructor stub
     }
 
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
 		String json = "";
 		DFSAnalyser dfs = new DFSAnalyser();
 		try {
@@ -51,7 +58,6 @@ public class Databases extends HttpServlet {
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
 		doGet(request, response);
 	}
 

@@ -1,3 +1,10 @@
+/**
+ * @author Mohammed El Moumni, Vivien Achet
+ * 
+ * Utility: send a json describing the cluster architecture. Should be the same json that the send by FileContent 
+ * 		servlet. But it should be way more optimized. If there is an issue you can fallback to using FileContent 
+ */
+
 package servlets;
 
 import java.io.IOException;
@@ -16,6 +23,8 @@ import analyser.TreeI;
 
 /**
  * Servlet implementation class HDFSContent
+ * 
+ * Get the whole tree architecture of the hdfs cluster given by a hdfs configuratio file
  */
 @WebServlet("/HDFSContent")
 public class HDFSContent extends HttpServlet {
@@ -28,14 +37,15 @@ public class HDFSContent extends HttpServlet {
      */
     public HDFSContent() {
         super();
-        // TODO Auto-generated constructor stub
     }
 
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 * Ensures :
+	 * 		- if the hdfs files architecture can be retrieved it sends the json representing that architecture
+	 * 		- else send an error code used by the client to give an error message accordingly
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
 		int minSize = Integer.parseInt(request.getParameter("minSize"));
 		minSize = (int)Math.pow(10, minSize);
 		
@@ -63,7 +73,6 @@ public class HDFSContent extends HttpServlet {
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
 		doGet(request, response);
 	}
 

@@ -1,3 +1,9 @@
+/**
+ * @author Mohammed El Moumni, Vivien Achet
+ * 
+ * Utility: send a json describing the datanodes state.
+ */
+
 package servlets;
 
 import java.io.IOException;
@@ -24,7 +30,6 @@ public class DiskUsage extends HttpServlet {
      */
     public DiskUsage() {
         super();
-        // TODO Auto-generated constructor stub
     }
 
 	/**

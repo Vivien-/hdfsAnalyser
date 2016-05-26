@@ -1,3 +1,9 @@
+/**
+ * @author Mohammed El Moumni, Vivien Achet
+ * 
+ * Utility: dispatch the user to  hbaseVisualizer.html
+ */
+
 package servlets;
 
 import java.io.IOException;
@@ -9,6 +15,9 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Servlet implementation class DiskDetails
+ * 
+ * Get each datanodes information in the cluster
+ * 
  */
 @WebServlet("/DiskDetails")
 public class DiskDetails extends HttpServlet {
@@ -19,7 +28,6 @@ public class DiskDetails extends HttpServlet {
      */
     public DiskDetails() {
         super();
-        // TODO Auto-generated constructor stub
     }
 
 	/**
@@ -34,7 +42,6 @@ public class DiskDetails extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
-		doGet(request, response);
 	}
 
 }

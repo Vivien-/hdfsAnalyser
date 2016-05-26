@@ -1,3 +1,9 @@
+/**
+ * @author Mohammed El Moumni, Vivien Achet
+ * 
+ * Utility: dispatch the user to  hiveVisualizer.html
+ */
+
 package servlets;
 
 import java.io.IOException;
@@ -19,14 +25,12 @@ public class Hive extends HttpServlet {
      */
     public Hive() {
         super();
-        // TODO Auto-generated constructor stub
     }
 
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
 		request.getRequestDispatcher("hiveVisualizer.html").forward(request, response);
 	}
 
@@ -34,7 +38,6 @@ public class Hive extends HttpServlet {
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
 		doGet(request, response);
 	}
 

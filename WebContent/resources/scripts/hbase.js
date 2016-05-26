@@ -1,8 +1,3 @@
-/**
- * 
- */
-
-
 //Getting window's height and width
 var w = window,
 d = document,

@@ -1,17 +1,31 @@
+/**
+ * @author Mohammed El Moumni, Vivien Achet
+ */
+
 package analyser;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
 
+/**
+ * What this class represent:
+ * 		It represents a node (file or directory) in the hdfs architecture
+ * 		- data is the node name
+ * 		- size is its size (in the case of a directory, the sum of its children' size)
+ * 		- path is the complete path, including its name
+ * 		- children the list of its children
+ * 		- parent is its parent node
+ * 		- lastModified is the date of last modification of the node: this is updated by the same date given by hdfs 
+ * 
+ * Initial value is defined by the constructor
+ *
+ */
 public class Node{
-	
-	
     private String data;
     private long size;
     private Timestamp lastModified;
     private String path;
 	private Node parent;
-
 	private ArrayList<Node> children;
 	
     public Node(String data, long size, long lastModified, String path){
@@ -50,10 +64,8 @@ public class Node{
         for(Node n : children)
             if(n.data.equals(data))
                 return n;
-
         return null;
     }
-	
     
     public long getLastModified() {
 		return lastModified.getTime();
@@ -84,6 +96,7 @@ public class Node{
 		children.remove(child);
 	}
 
+	// overload the java.lang equals method to check if 2 nodes are the same
 	public boolean equals(Node n) {
 		if (this == n) return true;
 		if (this == null) return false;

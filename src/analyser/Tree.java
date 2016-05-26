@@ -1,3 +1,7 @@
+/**
+ * @author Mohammed El Moumni, Vivien Achet
+ */
+
 package analyser;
 
 import java.io.Serializable;
@@ -19,13 +23,35 @@ import com.google.gson.JsonObject;
 
 import Exceptions.HadoopConfException;
 
+/**
+ * 
+ * What this class represent:
+ * 		It represents the whole tree linked to a hdfs configuration file
+ * 		In order to improve performances in case the cluster contains millions/billions/trillions of files (which may 
+ * 		trigger a long awaiting), the user can set a threshold size, minSize, that ensure the following :
+ * 		Ensures :
+ * 			- if node.getSize() > minSize :
+ * 				the node is displayed in the architecture
+ * 			- else :
+ * 				if the node is a file, it is displayed as a "others-LT$minSize" file. 
+ * 				every file in the node.getParent() directory that does not pass the threshold is added under the same label
+ * 		Why doing that :
+ * 			It may reduce the number of file rendered by the client browser, so for an average cluster it increases a lot the 
+ * 			performances. 
+ * 			In the worst case where the cluster contains the same number of directory and file (i.e. each directory
+ * 			contains only 1 file) it does not improve performances.
+ * 		
+ * 		This class is sessionScoped so that when a user make multiple request in a row there is no need to rebuild the
+ * 		whole architecture. It allows the implementation to hold some optimization.
+ * 		There is 2 possibilities that explains why the client view might need to be updated:
+ * 			- the architecture itself have been modified: a file/directory added or deleted
+ * 			- the user modified the minSize threshold
+ *
+ */
 @SessionScoped
 @Named("tree")
 public class Tree implements Serializable, TreeI{
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 	private Node root;
 	private int minSize;
@@ -64,23 +90,34 @@ public class Tree implements Serializable, TreeI{
 	 * @param lastModified
 	 */
 	private void add(String str, long size, long lastModified){
+		// The files which we want to hide because their size is lower than the minSize 
+		// given by the user will be stocker under that name
 		String other_name = "others-LT" + minSize;
 		root.setSize(root.getSize()+size);
 		Node current = root;
 		String[] s = str.split("/");
 		String path = "";
 
+		/*
+		 * For each parent node we create them (parent nodes are directory) if they have not been created
+		 * yet. 
+		 * Expected operation such as increasing the size of the parent directory according to the 
+		 * file size are done here. 
+		 * The last node, s[s.length - 1] is a file because only path of file are used
+		 */
 		for(int i = 0; i < s.length; i++){
 			str = s[i];
 			path = path+"/"+str;
 			Node child = current.getChild(str);
 			Node t_child = child;
 			
+			// If the node is a file and already exist it is deleted and replaced by the new one
 			if(child != null && (i == s.length-1)) {
 				current.getChildren().remove(child);
 				child = null;
 			}
 
+			// Node need to be created (file or directory)
 			if(child == null) {
 				if((i == s.length-1) && (size < minSize)){
 					if(current.getChild(other_name) == null)
@@ -98,20 +135,25 @@ public class Tree implements Serializable, TreeI{
 				}
 				child = current.getChild(str);
 			}
-			else {	
+			else {	// The directory already exist so its size is increased by the size of the file being added
 				child.setSize(child.getSize()+size);
 			}
-			if(t_child != null) {
+			if(t_child != null) { // Current node is being set its parent node
 				t_child.setParent(current);
 			}
-				
+			// Updating the time of last modification
 			if((i == s.length-2) && (lastModified > current.getLastModified()))
 				current.setLastModified(lastModified);
 			current = child;
 		}
 	}
 
-	
+	/**
+	 * Create the whole tree by adding all its files/not empty directories.
+	 * Empty directory are not added because there is no hadoop method to recursively list everything
+	 * @param minSize
+	 * @param root
+	 */
 	public void init(int minSize, String root) throws HadoopConfException{
 		try{
 			this.setMinSize(minSize);
@@ -165,6 +207,13 @@ public class Tree implements Serializable, TreeI{
 		this.isInitilized = isInitilized;
 	}
 
+	/**
+	 * Update minSize when the user decide to do so in the front end interface.
+	 * Since this trigger a lot of modification it just recreate the tree from scratch, maybe there is a more
+	 * efficient way to update the tree when minSize is modified, you need to provide a different implementation then
+	 * @param newMinSize
+	 * @throws HadoopConfException
+	 */
 	private void updateMinSize(int newMinSize) throws HadoopConfException {
 		root = new Node("/", 0, 0, "/");
 		this.minSize = newMinSize;
@@ -172,37 +221,57 @@ public class Tree implements Serializable, TreeI{
 		init(newMinSize, "/");
 	}
 
-
+/**
+ * Ensures
+ * 		- Update the tree with the new node (file/directory) added since the last request by the user
+ * 		- Update the tree without the deleted node since the last request by the user
+ * 		- Directory size are updated accordingly
+ * 
+ * This method is allow an important time optimization when a user send a request with the same minSize.
+ * It only modify the directories where files/directories have been added/deleted.
+ * To know which directory to update since the last request we use the time of last modification.
+ * However HDFS only update its time of last modification for the modified file/directory and its parent.
+ * This is why this method is done recursively for each node in the tree.
+ * 
+ * @param directory
+ */
 	private void updateLastModified(Node directory) {
 		try {
 			long hdfsAccessTime = hdfs.getFileStatus(new Path(hdfs.getConf().get("fs.defaultFS")+directory.getPath())).getModificationTime();
 			Path p = new Path(directory.getPath());
 			FileStatus[] t = hdfs.listStatus(p);
 			Boolean needUpdate = (directory.getLastModified() != hdfsAccessTime);
-			if(!needUpdate) {
+			// The current directory does not need to be updated but its children may, because of the way HDFS
+			// set its lastModifiedTime : only the modified node and its parent have their modified time updated
+			if(!needUpdate) { 
 				for(int i = 0; i < t.length; i++) {
 					if(t[i].isDirectory()) {
 						String pathStr = t[i].getPath().toString();
 						String childName = pathStr.substring(pathStr.lastIndexOf('/')+1);
+						// recursively look for update for the current directory's children
 						if(directory.getChild(childName) != null) {
 							updateLastModified(directory.getChild(childName));
 						}
-						else{
+						else{ 
+							// Some old node have been deleted
 							deleteOldElement(directory);
 						}
 					}
 				}
 			} else {
 				directory.setLastModified(hdfsAccessTime);
+				// Create the new node if new node have been created in the directory
 				updateFilesInPath(p);
+				// Delete old node if node have been deleted in the directory
 				deleteOldElement(directory);
 				for(int i = 0; i < t.length; i++) {
 					if(t[i].isDirectory()) {
 						String pathStr = t[i].getPath().toString();
 						String childName = pathStr.substring(pathStr.lastIndexOf('/')+1);
-						if(directory.getChild(childName) != null) {
+						if(directory.getChild(childName) != null) { // if child directory already existed
 							updateLastModified(directory.getChild(t[i].getPath().getName()));
 						} else {
+							// we need to append this subtree
 							init(minSize, t[i].getPath().toString());
 						}
 					}
@@ -213,7 +282,10 @@ public class Tree implements Serializable, TreeI{
 		}
 	}
 
-
+/**
+ * Append new node if they have been created in the directory of path p since last user request of the hdfs tree
+ * @param p
+ */
 	private void updateFilesInPath(Path p) {
 		try {
 			RemoteIterator<LocatedFileStatus> it = hdfs.listFiles(p, false);
@@ -236,6 +308,12 @@ public class Tree implements Serializable, TreeI{
 		}	
 	}
 
+	/**
+	 * Delete old node if they have been deleted in the directory of path p since last user request of the hdfs tree
+	 * If deleting a file in a directory makes it empty, the directory is deleted
+	 * This operation is done iteratively until it potentially reaches the root directory
+	 * @param dir
+	 */
 	private void deleteOldElement(Node dir) {
 		ArrayList<Node> children = dir.getChildren();
 		ArrayList<Node> newChildren = new ArrayList<Node>();
@@ -255,6 +333,8 @@ public class Tree implements Serializable, TreeI{
 		dir.setSize(size);
 		dir.setChildren(newChildren);
 
+		// Delete the directory if it is now empty due to the deletion of its only child
+		// Do it for its parent if needed
 		while(true) {
 			if(curent != null && ! curent.equals(root) && (curent.getSize() == 0 || curent.getChildren().size() == 0)) {
 				parent.getChildren().remove(curent);
@@ -266,7 +346,10 @@ public class Tree implements Serializable, TreeI{
 		}
 	}
 
-
+	/**
+	 * Update the tree since last request have been done
+	 * @param minSize
+	 */
 	public void update(int minSize) throws HadoopConfException{
 		if(minSize != this.getMinSize()) {
 			try {
@@ -278,6 +361,10 @@ public class Tree implements Serializable, TreeI{
 		updateLastModified(root);
 	}
 
+	/**
+	 * Jsonify the tree so it can be used by the client javascript library d3.js. This is json is used there
+	 * to rendeder the hdfs architecture
+	 */
 	public String getJson(){
 		TreeTraverser<Node> traverser = new TreeTraverser<Node>() {
 			@Override

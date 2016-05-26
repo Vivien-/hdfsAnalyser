@@ -1,3 +1,9 @@
+/**
+ * @author Mohammed El Moumni, Vivien Achet
+ * 
+ * Utility: send a json describing hive global content
+ */
+
 package servlets;
 
 import java.io.IOException;
@@ -31,7 +37,7 @@ public class HiveContent extends HttpServlet {
 		try {
 			String json = "";
 			DFSAnalyser dfs = new DFSAnalyser();
-			json = dfs.getHiveContent(/*""*/);
+			json = dfs.getHiveContent();
 			response.getWriter().print(json);
 		}  catch (IllegalArgumentException | TException | ClassNotFoundException e) {
 			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
