@@ -61,7 +61,7 @@ public class Tree implements Serializable, TreeI{
 	private boolean isInitilized;
 	private FileSystem hdfs;
 
-
+	private String otherName = ".other-generated-hdfsv";
 	/**
 	 * Constructor: initialize root and hdfs
 	 * @throws HadoopConfException
@@ -108,7 +108,8 @@ public class Tree implements Serializable, TreeI{
 	private void add(String str, long size, long lastModified){
 		// The files which we want to hide because their size is lower than the minSize 
 		// given by the user will be stocker under that name
-		String other_name = "others-LT" + minSize;
+		//String other_name = "others-LT" + minSize;
+		try{
 		root.setSize(root.getSize()+size);
 		Node current = root;
 		String[] s = str.split("/");
@@ -126,45 +127,95 @@ public class Tree implements Serializable, TreeI{
 			str = s[i];
 			path = path+"/"+str;
 			Node child = current.getChild(str);
-			Node t_child = child;
-			
-			// If the node is a file and already exist it is deleted and replaced by the new one
-			if(child != null && (i == s.length-1)) {
-				if(current.getChild(other_name) != null && child.getSize() < this.minSize)
-					current.getChild(other_name).setSize(current.getChild(other_name).getSize() - child.getSize());
-				current.getChildren().remove(child);
-				child = null;
+			Node newChild = new Node(str, size, lastModified, path);
+			newChild.setParent(current);
+			if(i == s.length - 1){//is file
+				if(size < this.minSize){
+					if(child != null){//file alredy exists
+						current.getChildren().remove(child);
+						
+						addToOther(current, newChild);
+					}
+					else{
+						
+						addToOther(current, newChild);
+					}
+				}
+				else{
+					if(child != null){
+						current.getChildren().remove(child);
+						current.getChildren().add(newChild);
+					}
+					else{
+						current.getChildren().add(newChild);
+					}
+				}
+			}
+			else{
+				if(child != null){
+					
+				}
+				else{
+					current.getChildren().add(newChild);
+				}
 			}
 
-			// Node need to be created (file or directory)
-			if(child == null) {
-				// It is a file and its size is under the threshold
-				if((i == s.length-1) && (size < minSize)){
-					if(current.getChild(other_name) == null) { // create the "other" file label
-						current.getChildren().add(new Node(other_name, size, lastModified,path.substring(0, path.lastIndexOf("/")).substring(0, path.lastIndexOf("/"))+"/"+other_name));
-					} else { // add the file to the "other" file label
-						current.getChild(other_name).setSize(current.getChild(other_name).getSize() + size);
-						if(lastModified > current.getChild(other_name).getLastModified())
-							current.getChild(other_name).setLastModified(lastModified);
-					}
-					t_child = current.getChild(other_name);
-				}
-				else {
-					current.getChildren().add(new Node(str, size, lastModified, path));
-					t_child = current.getChild(str);
-				}
-				child = current.getChild(str);
-			}
-			if(t_child != null) { // Current node is being set its parent node
-				t_child.setParent(current);
-			}
-			// Updating the time of last modification
-			if((i == s.length-2) && (lastModified > current.getLastModified()))
-				current.setLastModified(lastModified);
-			current = child;
+			current = newChild;
+//			str = s[i];
+//			path = path+"/"+str;
+//			Node child = current.getChild(str);
+//			Node t_child = child;
+//			
+//			// If the node is a file and already exist it is deleted and replaced by the new one
+//			if(child != null && (i == s.length-1)) {
+//				if(current.getChild(other_name) != null && child.getSize() < this.minSize)
+//					current.getChild(other_name).setSize(current.getChild(other_name).getSize() - child.getSize());
+//				current.getChildren().remove(child);
+//				child = null;
+//			}
+//
+//			// Node need to be created (file or directory)
+//			if(child == null) {
+//				// It is a file and its size is under the threshold
+//				if((i == s.length-1) && (size < minSize)){
+//					if(current.getChild(other_name) == null) { // create the "other" file label
+//						current.getChildren().add(new Node(other_name, size, lastModified,path.substring(0, path.lastIndexOf("/")).substring(0, path.lastIndexOf("/"))+"/"+other_name));
+//					} else { // add the file to the "other" file label
+//						current.getChild(other_name).setSize(current.getChild(other_name).getSize() + size);
+//						if(lastModified > current.getChild(other_name).getLastModified())
+//							current.getChild(other_name).setLastModified(lastModified);
+//					}
+//					t_child = current.getChild(other_name);
+//				}
+//				else {
+//					current.getChildren().add(new Node(str, size, lastModified, path));
+//					t_child = current.getChild(str);
+//				}
+//				child = current.getChild(str);
+//			}
+//			if(t_child != null) { // Current node is being set its parent node
+//				t_child.setParent(current);
+//			}
+//			// Updating the time of last modification
+//			if((i == s.length-2) && (lastModified > current.getLastModified()))
+//				current.setLastModified(lastModified);
+//			current = child;
+		}
+		}
+		catch(Exception e){
+			e.printStackTrace();
 		}
 	}
 
+	
+	private void addToOther(Node current, Node child){
+		if(current.getChild(otherName) != null){
+			current.getChild(otherName).setSize(current.getChild(otherName).getSize() + child.getSize());
+		}
+		else{
+			current.getChildren().add(new Node(otherName, child.getSize(), child.getLastModified(), child.getPath()));
+		}
+	}
 	/**
 	 * Create the whole tree by adding all its files/not empty directories.
 	 * Empty directory are not added because there is no hadoop method to recursively list everything
@@ -179,18 +230,18 @@ public class Tree implements Serializable, TreeI{
 			String path;
 			long size;
 			long lastModified;
-			try{
-				while(it.hasNext()) {
-					next = it.next();
-					path = next.getPath().toString();
-					size = next.getLen();
-					lastModified = next.getModificationTime();
-					path = path.replace(hdfs.getConf().get("fs.defaultFS"), "");
-					this.add(path, size, lastModified);
-				}
-			} catch(Exception e){
-				throw new HadoopConfException();
+			//try{
+			while(it.hasNext()) {
+				next = it.next();
+				path = next.getPath().toString();
+				size = next.getLen();
+				lastModified = next.getModificationTime();
+				path = path.replace(hdfs.getConf().get("fs.defaultFS"), "");
+				this.add(path, size, lastModified);
 			}
+			//} catch(Exception e){
+			//	throw new HadoopConfException();
+//			}
 			this.isInitilized = true;
 		}
 		catch(Exception e){
