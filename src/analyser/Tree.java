@@ -15,7 +15,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
-
+import org.apache.hadoop.hive.ql.parse.HiveParser_IdentifiersParser.booleanValue_return;
 
 import com.google.common.collect.TreeTraverser;
 import com.google.gson.JsonArray;
@@ -46,6 +46,9 @@ import Exceptions.HadoopConfException;
  * 		There is 2 possibilities that explains why the client view might need to be updated:
  * 			- the architecture itself have been modified: a file/directory added or deleted
  * 			- the user modified the minSize threshold
+ * 		The functions called for those 2 updates are respectively:
+ * 			- void updateLastModified(int newMinSize);
+ * 			- void updateLastMinSize(Node directory);
  *
  */
 @SessionScoped
@@ -85,6 +88,19 @@ public class Tree implements Serializable, TreeI{
 
 	/**
 	 * Add a node to the current tree
+	 * Ensures:
+	 * 		Tree t = new Tree();           => /
+	 * 		t.add("foo.txt", 180, n);      => /
+	 * 									       | foo.txt
+	 * 		t.add("bar/foobar.sh" 55, n);  => /
+	 * 										   | foo.txt
+	 * 										   | bar/
+	 * 											     | foobar.sh	
+	 * 		t.add("bar/toto.pdf", 980, n); => /
+	 * 										   | foo.txt
+	 * 										   | bar/
+	 * 											     | foobar.sh	
+	 * 												 | toto.pdf
 	 * @param str
 	 * @param size
 	 * @param lastModified
@@ -99,11 +115,12 @@ public class Tree implements Serializable, TreeI{
 		String path = "";
 
 		/*
-		 * For each parent node we create them (parent nodes are directory) if they have not been created
+		 * For each parent node of the file, we create them (parent nodes are directory) if they have not been created
 		 * yet. 
 		 * Expected operation such as increasing the size of the parent directory according to the 
 		 * file size are done here. 
-		 * The last node, s[s.length - 1] is a file because only path of file are used
+		 * The last node, s[s.length - 1] is a file because only path of file are given to this method 
+		 * (due to the fact that there is only the hdfs method listFiles() )
 		 */
 		for(int i = 0; i < s.length; i++){
 			str = s[i];
@@ -113,30 +130,30 @@ public class Tree implements Serializable, TreeI{
 			
 			// If the node is a file and already exist it is deleted and replaced by the new one
 			if(child != null && (i == s.length-1)) {
+				if(current.getChild(other_name) != null && child.getSize() < this.minSize)
+					current.getChild(other_name).setSize(current.getChild(other_name).getSize() - child.getSize());
 				current.getChildren().remove(child);
 				child = null;
 			}
 
 			// Node need to be created (file or directory)
 			if(child == null) {
+				// It is a file and its size is under the threshold
 				if((i == s.length-1) && (size < minSize)){
-					if(current.getChild(other_name) == null)
+					if(current.getChild(other_name) == null) { // create the "other" file label
 						current.getChildren().add(new Node(other_name, size, lastModified,path.substring(0, path.lastIndexOf("/")).substring(0, path.lastIndexOf("/"))+"/"+other_name));
-					else{
+					} else { // add the file to the "other" file label
 						current.getChild(other_name).setSize(current.getChild(other_name).getSize() + size);
 						if(lastModified > current.getChild(other_name).getLastModified())
 							current.getChild(other_name).setLastModified(lastModified);
 					}
 					t_child = current.getChild(other_name);
 				}
-				else{
+				else {
 					current.getChildren().add(new Node(str, size, lastModified, path));
 					t_child = current.getChild(str);
 				}
 				child = current.getChild(str);
-			}
-			else {	// The directory already exist so its size is increased by the size of the file being added
-				child.setSize(child.getSize()+size);
 			}
 			if(t_child != null) { // Current node is being set its parent node
 				t_child.setParent(current);
@@ -160,14 +177,12 @@ public class Tree implements Serializable, TreeI{
 			RemoteIterator<LocatedFileStatus> it = hdfs.listFiles(new Path(root), true);
 			LocatedFileStatus next;
 			String path;
-			String name;
 			long size;
 			long lastModified;
 			try{
 				while(it.hasNext()) {
 					next = it.next();
 					path = next.getPath().toString();
-					name = next.getPath().getName();
 					size = next.getLen();
 					lastModified = next.getModificationTime();
 					path = path.replace(hdfs.getConf().get("fs.defaultFS"), "");
@@ -218,16 +233,16 @@ public class Tree implements Serializable, TreeI{
 		root = new Node("/", 0, 0, "/");
 		this.minSize = newMinSize;
 		this.isInitilized = false;
-		init(newMinSize, "/");
+		init(minSize, "/");
 	}
 
 /**
  * Ensures
- * 		- Update the tree with the new node (file/directory) added since the last request by the user
- * 		- Update the tree without the deleted node since the last request by the user
+ * 		- Update the tree with the new node(s) (file/directory) added since the last request by the user
+ * 		- Update the tree without the deleted node(s) since the last request by the user
  * 		- Directory size are updated accordingly
  * 
- * This method is allow an important time optimization when a user send a request with the same minSize.
+ * This method allow an important time optimization when a user send a request with the same minSize.
  * It only modify the directories where files/directories have been added/deleted.
  * To know which directory to update since the last request we use the time of last modification.
  * However HDFS only update its time of last modification for the modified file/directory and its parent.
@@ -291,13 +306,11 @@ public class Tree implements Serializable, TreeI{
 			RemoteIterator<LocatedFileStatus> it = hdfs.listFiles(p, false);
 			LocatedFileStatus next;
 			String path;
-			String name;
 			long size;
 			long lastModified;
 			while(it.hasNext()) {
 				next = it.next();
 				path = next.getPath().toString();
-				name = next.getPath().getName();
 				size = next.getLen();
 				lastModified = next.getModificationTime();
 				path = path.replace(hdfs.getConf().get("fs.defaultFS"), "");
