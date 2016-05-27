@@ -92,15 +92,23 @@ public class Tree implements Serializable, TreeI{
 	 * 		Tree t = new Tree();           => /
 	 * 		t.add("foo.txt", 180, n);      => /
 	 * 									       | foo.txt
+	 * 
 	 * 		t.add("bar/foobar.sh" 55, n);  => /
 	 * 										   | foo.txt
 	 * 										   | bar/
 	 * 											     | foobar.sh	
+	 * 
 	 * 		t.add("bar/toto.pdf", 980, n); => /
 	 * 										   | foo.txt
 	 * 										   | bar/
 	 * 											     | foobar.sh	
-	 * 												 | toto.pdf
+	 * 												 | toto.pdf     (size 980o)
+	 * 
+	 * 		t.add("bar/toto.pdf", 103, n); => /
+	 * 										   | foo.txt
+	 * 										   | bar/
+	 * 											     | foobar.sh	
+	 * 												 | toto.pdf     (size 103o)
 	 * @param str
 	 * @param size
 	 * @param lastModified
@@ -108,7 +116,7 @@ public class Tree implements Serializable, TreeI{
 	private void add(String str, long size, long lastModified){
 		// The files which we want to hide because their size is lower than the minSize 
 		// given by the user will be stocker under that name
-		//String other_name = "others-LT" + minSize;
+		// String other_name = "others-LT" + minSize;
 		try{
 		root.setSize(root.getSize()+size);
 		Node current = root;
@@ -129,38 +137,32 @@ public class Tree implements Serializable, TreeI{
 			Node child = current.getChild(str);
 			Node newChild = new Node(str, size, lastModified, path);
 			newChild.setParent(current);
-			if(i == s.length - 1){//is file
-				if(size < this.minSize){
-					if(child != null){//file alredy exists
+			if(i == s.length - 1) {       // newChild is a file
+				if(size < this.minSize) {
+					if(child != null) {   // file already exists
 						current.getChildren().remove(child);
-						
+						addToOther(current, newChild);
+					} else {
 						addToOther(current, newChild);
 					}
-					else{
-						
-						addToOther(current, newChild);
-					}
-				}
-				else{
-					if(child != null){
+				} else {
+					if(child != null) {
 						current.getChildren().remove(child);
 						current.getChildren().add(newChild);
-					}
-					else{
+					} else {
 						current.getChildren().add(newChild);
 					}
 				}
-			}
-			else{
-				if(child != null){
-					
-				}
-				else{
+				current = newChild;
+			} else { // newChild is a directory 
+				if(child == null){ // It does not exist yet
 					current.getChildren().add(newChild);
+					current = newChild;
+				} else {
+					current = child;
 				}
 			}
 
-			current = newChild;
 //			str = s[i];
 //			path = path+"/"+str;
 //			Node child = current.getChild(str);
@@ -211,11 +213,11 @@ public class Tree implements Serializable, TreeI{
 	private void addToOther(Node current, Node child){
 		if(current.getChild(otherName) != null){
 			current.getChild(otherName).setSize(current.getChild(otherName).getSize() + child.getSize());
-		}
-		else{
+		} else{
 			current.getChildren().add(new Node(otherName, child.getSize(), child.getLastModified(), child.getPath()));
 		}
 	}
+	
 	/**
 	 * Create the whole tree by adding all its files/not empty directories.
 	 * Empty directory are not added because there is no hadoop method to recursively list everything
