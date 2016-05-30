@@ -4,6 +4,7 @@
 
 package analyser;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
 import javax.enterprise.context.SessionScoped;
@@ -60,8 +61,9 @@ public class Tree implements Serializable, TreeI{
 	private int minSize;
 	private boolean isInitilized;
 	private FileSystem hdfs;
-
+	private Map <String, Long> otherNodes;
 	private String otherName = ".other-generated-hdfsv";
+	
 	/**
 	 * Constructor: initialize root and hdfs
 	 * @throws HadoopConfException
@@ -76,6 +78,7 @@ public class Tree implements Serializable, TreeI{
 			root = new Node("/", 0, 0, "/");
 			this.minSize = 0;
 			this.isInitilized = false;
+			this.otherNodes = new HashMap<String, Long>();
 		}
 		catch(Exception e){
 			throw new HadoopConfException();
@@ -211,10 +214,18 @@ public class Tree implements Serializable, TreeI{
 
 	
 	private void addToOther(Node current, Node child){
-		if(current.getChild(otherName) != null){
-			current.getChild(otherName).setSize(current.getChild(otherName).getSize() + child.getSize());
-		} else{
-			current.getChildren().add(new Node(otherName, child.getSize(), child.getLastModified(), child.getPath()));
+		if(otherNodes.get(child.getPath()) != null) { // child is already in "other" node
+			if(current.getChild(otherName) != null)
+				current.getChild(otherName).setSize(current.getChild(otherName).getSize() - otherNodes.get(child.getPath()) + child.getSize());
+			else
+				System.out.println("addToOther: Should not be happening.");
+		} else { // we just need to update the size of other (the filesize may have changed since the last update)
+			if(current.getChild(otherName) != null){
+				current.getChild(otherName).setSize(current.getChild(otherName).getSize() + child.getSize());
+			} else{
+				current.getChildren().add(new Node(otherName, child.getSize(), child.getLastModified(), child.getPath()));
+			}
+			otherNodes.put(child.getPath(), child.getSize()); 
 		}
 	}
 	
@@ -283,10 +294,22 @@ public class Tree implements Serializable, TreeI{
 	 * @throws HadoopConfException
 	 */
 	private void updateMinSize(int newMinSize) throws HadoopConfException {
-		root = new Node("/", 0, 0, "/");
-		this.minSize = newMinSize;
-		this.isInitilized = false;
-		init(minSize, "/");
+		try {
+			String cf = System.getenv("HADOOP_CONF");
+			Path p = new Path(cf);
+			Configuration configuration = new Configuration(true);
+			configuration.addResource(p);
+			hdfs = FileSystem.get(configuration);
+			root = new Node("/", 0, 0, "/");
+			this.minSize = 0;
+			this.isInitilized = false;
+			this.otherNodes = new HashMap<String, Long>();
+			this.minSize = newMinSize;
+			init(minSize, "/");
+		}
+		catch(Exception e){
+			throw new HadoopConfException();
+		}
 	}
 
 /**
@@ -383,21 +406,31 @@ public class Tree implements Serializable, TreeI{
 	private void deleteOldElement(Node dir) {
 		ArrayList<Node> children = dir.getChildren();
 		ArrayList<Node> newChildren = new ArrayList<Node>();
-		int size = 0;
 		Node parent = dir.getParent();
 		Node curent = dir;
 		for(Node child : children) {
 			try {
-				if(hdfs.exists(new Path(child.getPath())) || child.getData().equals("others-LT" + minSize)) {
+				if(hdfs.exists(new Path(child.getPath())) || child.getData().equals(otherName)) {
 					newChildren.add(child);
-					size += child.getSize();
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		dir.setSize(size);
 		dir.setChildren(newChildren);
+		
+		// Check if a child who was in "other" was deleted
+		for(Node child : children) {
+			if(otherNodes.get(child.getPath()) != null) {
+				try {
+					if(!hdfs.exists(new Path(child.getPath())))
+						dir.getChild(otherName).setSize(dir.getChild(otherName).getSize() - child.getSize());
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
 
 		// Delete the directory if it is now empty due to the deletion of its only child
 		// Do it for its parent if needed
