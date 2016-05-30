@@ -24,7 +24,6 @@
 	<a class="button" href="/HadoopAnalyser/DiskDetails">See disks details</a>
 	<div id="time"></div>
 	<div id="replication"></div>
-	<div id="error" style="display: none; color:red;">Invalid URL, please enter a new one by clicking <br> the button check another HDFS</div>
 	<div id="border"></div>
 	<div id="chart"></div>
 	<div id="center"></div>
@@ -39,6 +38,7 @@
 		<input id="range" type="range" min="0" max="12" value="0" onchange="rangevalue.value=f(value)" />
 		<output id="rangevalue"></output>
 	</div>
+	<div id="error" style="display:none; position: absolute; top:80px; left: 100px;"></div>
 	<script src="resources/scripts/d3.tip.v0.6.3.js"></script>
 	<script src="resources/scripts/script.js" charset="utf-8"></script>
 </body>

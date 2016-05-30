@@ -103,19 +103,45 @@
 		return d.name + "<br>" + "<span style='color:orangered'>" + formatBytes(d.value, 2) + "</span>";
 	});
 
+	/**
+	 * Error handler using the code status returned by the servlet
+	 */
+	function errorManager(status) {
+		switch(status){
+		case 1001:
+			error("Status " + status + ". Can't get Hadoop data, possible solution : <br>- Set the HADOOP_CONF environment variable to the absolute path of your hadoop hive-site.xml in your ~/.bashrc and then source ~/.bashrc <br>- Check that the HADOOP_CONF is set to a correct path and that the file is properly formated.", "error");
+			break;
+		default:
+			error("An unknown error occured <br>error status " + status, "error");
+			break;
+		}
+	}
+
+	function error(message, level) {
+		$("#error").append("<div class='message "+ level +"'>"+ level.toUpperCase() +": " + message +"</div>")
+				   .show();
+
+		$(".message:last").click(function() {$(this).fadeOut('fast'); });
+		if(level === "error") {
+			$("#waitChartDatabases").hide();
+			$("#waitChartTables").hide();
+			$("table").hide(); 
+		}
+	}
+	
 	// creating the svg element that wrapp the sunburst, and placing it at the correct place 
 	
 	/**
 	 * Here we are creating the left part of the screen: 
 	 *  _____________________ 
-	 * |	<button>		| ...
+	 * |<nav buttons>		| ...
 	 * |					| ...
 	 * |					| ...
 	 * |					| ...
 	 * |					| ...
 	 * |					| ...
 	 * |   the whole tree	| ...
-	 * |	  cluser		| ...
+	 * |	  cluster		| ...
 	 * |	visualized		| ...
 	 * |  using sunburst	| ...
 	 * |					| ...
@@ -161,8 +187,7 @@
 	d3.json("/HadoopAnalyser/HDFSContent?minSize=" + $("#range").val(), function(error, root) {
 		$("#wait").hide();
 		if(error) {
-			$("#error").show();
-			//TODO : real error handler like in the other scripts
+			errorManager(error.status);
 		} else {
 			// compute and display the time it took for the servlet to answer the request
 			var end = new Date().getTime();
