@@ -1,5 +1,5 @@
 /**
- * 
+ *  Create the HDFS view at /HadoopAnalyser/Start
  *  Overall view that should be created by this script: 
  *  ________________________________________
  * | <nav buttons>		|					|
@@ -73,7 +73,9 @@
 		rvalue = params.minSize;
 
 	//the following lines are just UI update as a function of the rvalue parameter
-	$("#refresh").append(" (> " + f(rvalue) + ")"); 
+	$("#refresh").append(" (> " + f(rvalue) + ")");
+	$("#refresh").attr("href", "/HadoopAnalyser/Start?minSize=" + rvalue);
+	
 	$("#range")
 	.val(rvalue)
 	.on("change", function(){

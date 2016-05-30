@@ -243,7 +243,6 @@ public class Tree implements Serializable, TreeI{
 			String path;
 			long size;
 			long lastModified;
-			//try{
 			while(it.hasNext()) {
 				next = it.next();
 				path = next.getPath().toString();
@@ -252,9 +251,6 @@ public class Tree implements Serializable, TreeI{
 				path = path.replace(hdfs.getConf().get("fs.defaultFS"), "");
 				this.add(path, size, lastModified);
 			}
-			//} catch(Exception e){
-			//	throw new HadoopConfException();
-//			}
 			this.isInitilized = true;
 		}
 		catch(Exception e){
