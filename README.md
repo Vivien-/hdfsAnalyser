@@ -1,3 +1,3 @@
 # hdfsAnalyser
 
-hdfsAnalyser is deprecated, use HDFSV
+hdfsAnalyser is deprecated and not maintained, use HDFSV
